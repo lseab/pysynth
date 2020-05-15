@@ -1,2 +1,3 @@
 # pysynth
-Audio synthesizer written in python
+First attempts at building a synthesizer in python
+Run main.py in terminal.
