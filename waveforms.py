@@ -33,6 +33,6 @@ class SineWave(Oscillator):
         while True:
             block = []
             for _ in range(params.blocksize):
-                block.append(np.sin(t * self.frequency))
+                block.append(self.amplitude * np.sin(t * self.frequency))
                 t += increment
             yield block
