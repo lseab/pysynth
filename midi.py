@@ -4,7 +4,7 @@ from threading import Thread
 
 class MidiController:
 
-    def __init__(self, gui=None):
+    def __init__(self, output):
         midi.init()
         self._midi_active = False
         self.input_devices = self.get_input_devices()
@@ -12,7 +12,7 @@ class MidiController:
         self.controller = None
         self._frequency = 0
         self.midi_thread = None
-        self.gui = gui
+        self.output = output
 
     @property
     def active(self):
@@ -48,7 +48,7 @@ class MidiController:
         """
         self.controller = self._input_device(device_id)
         if self.active:
-            self.gui.oscillators[0].play
+            #self.output.play()
             self.midi_thread = Thread(target=self.update_oscillators)
             self.midi_thread.start()
 
@@ -84,11 +84,10 @@ class MidiController:
         while self.active:
             if self.controller.poll():
                 self.read_input()
-                for osc in self.gui.oscillators:
-                    try:
-                        osc.osc.frequency = int(self.frequency)
-                    except AttributeError:
-                        pass
+                try:
+                    self.output.set_osc_frequency(int(self.frequency))
+                except AttributeError:
+                    pass
 
     def close_controller(self):
         """

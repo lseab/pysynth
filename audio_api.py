@@ -40,7 +40,6 @@ class AudioApi:
         """
         PortAudio callback function for callback in OutputStream.
         """
-
         if not self.data or not self.playing:
             outdata[:self.blocksize, self.channel_mapping] = np.zeros((self.blocksize, self.channels))
         else:
