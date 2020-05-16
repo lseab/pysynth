@@ -17,14 +17,18 @@ class Output:
         self.oscillator.frequency = frequency
 
     def tremolo(self):
-        self.modulated = AmModulationFilter(source=self.oscillator, modulator=self.am_modulator)
+        if self.am_modulator:
+            self.modulated = AmModulationFilter(source=self.oscillator, modulator=self.am_modulator)
+        else:
+            self.modulated = self.oscillator
 
     def apply_filters(self):
         self.tremolo()
 
     def play(self):
-        self.apply_filters()   
-        self.audio_api.play(self.modulated)
+        if self.oscillator:
+            self.apply_filters()   
+            self.audio_api.play(self.modulated)
 
     def stop(self):
         self.audio_api.stop()
