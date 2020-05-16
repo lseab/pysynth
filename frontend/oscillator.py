@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from waveforms import SineWave
+from waveforms import SineWave, SquareWave
 
 class OscillatorGUI(ttk.LabelFrame):
     """
@@ -17,10 +17,10 @@ class OscillatorGUI(ttk.LabelFrame):
         """
         # Waveform choice
         self.waveforms = {
-            "sine": SineWave, 
+            "sine": SineWave,  
+            "square": SquareWave,
             "triangle": None,
-            "sawtooth": None, 
-            "square": None, 
+            "sawtooth": None,
             "noise": None
             }
         self.input_waveformtype = tk.StringVar()

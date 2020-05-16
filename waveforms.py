@@ -23,7 +23,7 @@ class SineWave(Oscillator):
     Pure sine wave oscillator.
     """
     def __init__(self, frequency: int = 0, amplitude: int = 1.0, framerate: int = params.framerate):
-        super(SineWave, self).__init__(framerate)
+        super().__init__(framerate)
         self.frequency = frequency
         self.amplitude = amplitude
 
@@ -34,5 +34,24 @@ class SineWave(Oscillator):
             block = []
             for _ in range(params.blocksize):
                 block.append(self.amplitude * np.sin(t * self.frequency))
+                t += increment
+            yield block
+
+class SquareWave(Oscillator):
+    """
+    Pure square wave oscillator.
+    """
+    def __init__(self, frequency: int = 0, amplitude: int = 1.0, framerate: int = params.framerate):
+        super().__init__(framerate)
+        self.frequency = frequency
+        self.amplitude = amplitude
+
+    def blocks(self) -> Generator[List[float], None, None]:
+        increment = 1.0 / self.framerate
+        t = 0.0
+        while True:
+            block = []
+            for _ in range(params.blocksize):
+                block.append(self.amplitude if int(2*t*self.frequency) % 2 == 0 else -self.amplitude)
                 t += increment
             yield block
