@@ -12,6 +12,7 @@ class AudioApi:
         self.stream.start()
         self.data = None
         self.volume = 100.0
+        self.playing = False
 
     def initialize_stream(self):
         """
@@ -22,7 +23,6 @@ class AudioApi:
             channels=self.channels,
             blocksize=self.blocksize,
             callback=self.callback,
-            #finished_callback=self.finished_callback,
             dtype='float32')
 
         return stream
@@ -41,7 +41,7 @@ class AudioApi:
         PortAudio callback function for callback in OutputStream.
         """
 
-        if not self.data:
+        if not self.data or not self.playing:
             outdata[:self.blocksize, self.channel_mapping] = np.zeros((self.blocksize, self.channels))
         else:
             try: 
@@ -57,3 +57,7 @@ class AudioApi:
         e.g an Oscillator object.
         """
         self.data = data.blocks()
+        self.playing = True
+
+    def stop(self):
+        self.playing = False

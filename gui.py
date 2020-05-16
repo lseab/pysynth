@@ -1,10 +1,9 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 import params
 from audio_api import AudioApi
 from waveforms import SineWave
 from midi import MidiController
-from threading import Thread
 
 
 class OscillatorGUI(tk.LabelFrame):
@@ -32,7 +31,7 @@ class OscillatorGUI(tk.LabelFrame):
             "noise": None
             }
         self.input_waveformtype = tk.StringVar()
-        self.waveform = tk.OptionMenu(self, self.input_waveformtype, *self.waveforms.keys(), command=self.create_osc)
+        self.waveform = ttk.OptionMenu(self, self.input_waveformtype, '<select waveform>', *self.waveforms.keys(), command=self.create_osc)
         self.waveform.grid(row=0, column=0, pady=10)
 
         # Set frequency
@@ -44,7 +43,7 @@ class OscillatorGUI(tk.LabelFrame):
         self.input_freq.grid(row=0, column=1, pady=10)
 
         # Play button
-        self.play_btn = tk.Button(self, text="Play", command=self.play_osc)
+        self.play_btn = ttk.Button(self, text="Play", command=self.set_frequency)
         self.play_btn.grid(row=2, column=0, pady=10)
 
     def create_osc(self, *args):
@@ -54,12 +53,19 @@ class OscillatorGUI(tk.LabelFrame):
         osc = self.waveforms[self.input_waveformtype.get()]
         self.osc = osc()
         self.freq_frame.grid(row=1)
+        self.play()
 
-    def play_osc(self):
+    def set_frequency(self):
         """
-        Start oscillator playback.
+        Set frequency to input value and start oscillator playback.
         """
-        if self.osc: self.osc.frequency = int(self.input_freq.get())
+        if self.osc: 
+            self.osc.frequency = int(self.input_freq.get())
+
+    def play(self):
+        """
+        Call play on audio interface.
+        """
         self.audio_api.play(self.osc)
 
 
@@ -67,12 +73,10 @@ class SynthGUI(tk.Frame):
 
     def __init__(self, master=None):
         super().__init__(master)
-        self._is_running = True
         self.audio_api = AudioApi(framerate=params.framerate, blocksize=params.blocksize, channels=1)
-        self.use_midi = True
-        self.controller = MidiController()
         self.init_protocols()
-        self.UI()
+        self.generate_oscillators()
+        self.generate_input()
         self.pack()
 
     def init_protocols(self):
@@ -86,42 +90,42 @@ class SynthGUI(tk.Frame):
         Closing message box
         """
         if messagebox.askokcancel("Quit", "Are you sure you want to quit?"):
-            self._is_running = False
-            self.midi_thread.join()
-            self.controller.close()
+            self.controller.close_controller()
+            MidiController.exit()
             self.master.destroy()
 
-    def UI(self):
+    def generate_oscillators(self):
+        """
+        Create oscillator frames.
+        """
+        self.oscillators = []
+        self.oscframe = tk.Frame(self)
+        for _ in range(1):
+            osc_nr = len(self.oscillators)
+            osc_gui = OscillatorGUI(self.oscframe, title=f'Oscillator {str(osc_nr)}', audio_api=self.audio_api)
+            osc_gui.pack(side=tk.LEFT, anchor=tk.N, padx=10, pady=10)
+            self.oscillators.append(osc_gui)
+        self.oscframe.pack(side=tk.TOP, padx=10, pady=10)
+
+    def generate_input(self):
         """
         Generate UI.
         """
-        self.oscillators = []
-        self.osc_frame = tk.Frame(self)
-        for _ in range(3):
-            self.generate_osc_gui()
-        self.osc_frame.pack(side=tk.TOP, padx=10, pady=10)
-        if self.use_midi: 
-            self.midi_thread = Thread(target=self.get_midi_info)
-            self.midi_thread.start()
+        ## Input Frame
+        self.controller = MidiController(self)
+        self.inputFrame = tk.Frame(self)
+        self.inputFrame.pack(side=tk.TOP, padx=10, pady=10)
+        self.input_device = tk.StringVar()
+        self.input = ttk.OptionMenu(self.inputFrame, self.input_device, 'None', *self.controller.get_input_devices().keys())
+        # callback only triggered on config change
+        self.input.bind("<Configure>", self.select_input_device)
+        self.input.grid(row=0, column=0, pady=10)
 
-    def generate_osc_gui(self):
+    def select_input_device(self, *args):
         """
-        Add oscillator panels.
+        Called upon change in the input_device menu.
+        Get new input_device ID and sets the new input on the Midi controller interface.
         """
-        osc_nr = len(self.oscillators)
-        osc_gui = OscillatorGUI(self.osc_frame, title=f'Oscillator {str(osc_nr)}', audio_api=self.audio_api)
-        osc_gui.pack(side=tk.LEFT, anchor=tk.N, padx=10, pady=10)
-        self.oscillators.append(osc_gui)
-
-    def get_midi_info(self):
-        """
-        Extract midi info from controller.
-        Update oscillators if use_midi flag set to True.
-        """
-        while self._is_running:
-            self.controller.read_input()
-            for osc in self.oscillators:
-                try:
-                    osc.osc.frequency = int(self.controller.frequency)
-                except AttributeError:
-                    pass
+        selection = self.input_device.get()
+        device_id = self.controller.get_input_devices()[selection]
+        self.controller.set_input_device(device_id)
