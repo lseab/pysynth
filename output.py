@@ -1,6 +1,6 @@
 import params
 from audio_api import AudioApi
-from filters import AmModulationFilter
+from filters import AmpModulationFilter
 
 
 class Output:
@@ -18,7 +18,7 @@ class Output:
 
     def tremolo(self):
         if self.am_modulator:
-            self.modulated = AmModulationFilter(source=self.oscillator, modulator=self.am_modulator)
+            self.modulated = AmpModulationFilter(source=self.oscillator, modulator=self.am_modulator)
         else:
             self.modulated = self.oscillator
 
