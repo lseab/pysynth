@@ -16,6 +16,7 @@ class SynthGUI(ttk.Frame):
         self.generate_oscillators()
         self.generate_filters()
         self.generate_input()
+        self.playback_frame()
         self.pack()
 
     def init_protocols(self):
@@ -39,12 +40,19 @@ class SynthGUI(ttk.Frame):
         """
         self.oscillators = []
         self.oscframe = tk.Frame(self)
-        for _ in range(1):
+        for _ in range(2):
             osc_nr = len(self.oscillators)
-            osc_gui = OscillatorGUI(master_frame=self.oscframe, output=self.output, title=f'Oscillator {str(osc_nr + 1)}')
+            osc_gui = OscillatorGUI(master_frame=self.oscframe, output=self.output, name=f'Oscillator {str(osc_nr + 1)}')
             osc_gui.pack(side=tk.LEFT, anchor=tk.N, padx=10, pady=10)
             self.oscillators.append(osc_gui)
+        for osc in self.oscillators[:-1]:
+            osc.FM_frame()
+        self.normalise_amplitudes(self.oscillators)
         self.oscframe.pack(side=tk.TOP, padx=10, pady=10)
+
+    def normalise_amplitudes(self, oscillators):
+        for o in oscillators:
+            o.osc.amplitude = o.osc.amplitude / len(oscillators)
 
     def generate_input(self):
         """
@@ -69,6 +77,17 @@ class SynthGUI(ttk.Frame):
         self.trem_gui = TremoloGUI(self.tremolo_frame, output=self.output, title=f'Tremolo (AM modulation)')
         self.trem_gui.pack()
 
+    def playback_frame(self):
+        # Playback frame
+        self.play_frame = tk.Frame(self.inputFrame)
+        self.play_frame.grid(row=0, column=2, padx=20)
+        # Play button
+        self.play_btn = ttk.Button(self.play_frame, text="Play", command=self.play)
+        self.play_btn.grid(row=0, column=2, padx=5, pady=10)
+        # Stop button
+        self.stop_btn = ttk.Button(self.play_frame, text="Stop", command=self.stop)
+        self.stop_btn.grid(row=0, column=3, padx=5, pady=10)
+
     def select_input_device(self, *args):
         """
         Called upon change in the input_device menu.
@@ -77,3 +96,15 @@ class SynthGUI(ttk.Frame):
         selection = self.input_device.get()
         device_id = self.controller.get_input_devices()[selection]
         self.controller.set_input_device(device_id)
+    
+    def play(self):
+        """
+        Call play on audio interface.
+        """
+        self.output.play()
+
+    def stop(self):
+        """
+        Call stop on audio interface.
+        """
+        self.output.stop()

@@ -1,2 +1,2 @@
 framerate = 44100
-blocksize = 512
+blocksize = 2048

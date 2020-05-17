@@ -85,7 +85,7 @@ class MidiController:
             if self.controller.poll():
                 self.read_input()
                 try:
-                    self.output.set_osc_frequency(int(self.frequency))
+                    self.output.set_output_frequency(int(self.frequency))
                 except AttributeError:
                     pass
 
