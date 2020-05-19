@@ -20,13 +20,20 @@ class FreqModulationFilter:
     Frequncy modulater. Takes a source oscillator and a modulating oscillator as inputs and generates a modulated signal.
     """
     def __init__(self, source: Oscillator, modulator: Oscillator, amplitude: float = 1.0):
-        self.source = source.blocks(modulate=True)
-        self.modulator = modulator.blocks()
+        self.source = source
+        self.modulator = modulator
         self.amplitude = amplitude
 
-    def blocks(self):
+    def __str__(self):
+        return f'FreqMod({self.source}, {self.modulator})'
+
+    def blocks(self, modulate=False):
         while True:
-            yield np.cos([s + m for (s, m) in zip(next(self.source), next(self.modulator))])
+            # modulation = [s + m for (s, m) in zip(next(self.source.blocks(modulate=True)), next(self.modulator.blocks()))]
+            if modulate:
+                yield [s + m for (s, m) in zip(next(self.source.blocks(modulate=True)), next(self.modulator.blocks()))]                
+            else:
+                yield np.cos([s + m for (s, m) in zip(next(self.source.blocks(modulate=True)), next(self.modulator.blocks()))])
 
 
 class SumFilter:
@@ -35,6 +42,9 @@ class SumFilter:
     """
     def __init__(self, sources: List[Oscillator]):
         self.sources = sources
+
+    def __str__(self):
+        return f'Sum{tuple(str(s) for s in self.sources)}'
 
     def blocks(self):
         sources = [src.blocks() for src in self.sources]

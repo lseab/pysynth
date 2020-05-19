@@ -1,5 +1,5 @@
 from copy import copy
-from filters import FreqModulationFilter
+from filters import FreqModulationFilter, SumFilter
 
 class Routing:
 
@@ -11,6 +11,9 @@ class Routing:
 
     def freq_modulate(self, source, modulator):
         return FreqModulationFilter(source=source, modulator=modulator)
+
+    def sum_signals(self, signals):
+        return SumFilter(signals)
 
     def get_nodes(self):
         return [o.osc for o in self.oscillators if not o.to_oscillator]
@@ -41,8 +44,16 @@ class Routing:
         for el in route:
             for k in list(el.keys()):
                 if len(el[k]) == 0:
-                    self.freq_mod = self.freq_modulate(k, prev)
-                    route.remove(el)
+                    if prev != None:
+                        self.freq_mod = self.freq_modulate(prev, k)
+                        route.remove(el)
+                elif len(el[k]) > 1:
+                    self.do_routing(el[k])
+                    iter_ = iter(el[k])
+                    summed = SumFilter([next(iter(o.keys())) for o in el[k]])
+                    freq_mod = self.freq_modulate(k, summed)
+                    el[freq_mod] = []
+                    del el[k]
                 else:
                     self.do_routing(el[k], k)
                     if len(el[k]) != 0:
@@ -52,6 +63,9 @@ class Routing:
         return route
 
     def get_final_output(self):
-        route = self.establish_route()
-        final_output = self.do_routing(route)
+        final_output = []
+        routes = self.establish_route()
+        for route in routes:
+            routed = self.do_routing([route])
+            final_output.append([next(iter(o.keys())) for o in routed][0])
         return final_output

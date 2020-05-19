@@ -11,6 +11,7 @@ class SynthGUI(ttk.Frame):
 
     def __init__(self, master=None):
         super().__init__(master)
+        self.first = True
         self.output = Output()
         self.init_protocols()
         self.generate_oscillators()
@@ -40,14 +41,23 @@ class SynthGUI(ttk.Frame):
         """
         self.oscillators = []
         self.oscframe = tk.Frame(self)
+
         for _ in range(2):
             osc_nr = len(self.oscillators)
             osc_gui = OscillatorGUI(master_frame=self.oscframe, output=self.output, name=f'Oscillator {str(osc_nr + 1)}')
             osc_gui.pack(side=tk.LEFT, anchor=tk.N, padx=10, pady=10)
             self.oscillators.append(osc_gui)
+
         for osc in self.oscillators[:-1]:
             osc.FM_frame()
+            ## TO DO
+            # Implement multiple FM send
+            #
+            # if self.first:
+            #     osc.FM_frame()
+            #     self.first = False
         self.normalise_amplitudes(self.oscillators)
+
         self.oscframe.pack(side=tk.TOP, padx=10, pady=10)
 
     def normalise_amplitudes(self, oscillators):

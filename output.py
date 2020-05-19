@@ -2,6 +2,7 @@ import params
 from copy import copy
 from audio_api import AudioApi
 from filters import AmpModulationFilter, FreqModulationFilter, SumFilter
+from routing import Routing
 
 
 class Output:
@@ -27,29 +28,12 @@ class Output:
             return AmpModulationFilter(source=source, modulator=self.am_modulator)
         else:
             return source
-
-    def freq_modulate(self, source, modulator):
-        return FreqModulationFilter(source=source.osc, modulator=modulator.osc)
-
-    def do_routing(self):
-        routed = []
-        oscillators = copy(self.oscillators)
-        for o in self.oscillators:
-            if o in oscillators:
-                if o.to_oscillator:
-                    routed.append(self.freq_modulate(source=o.to_oscillator, modulator=o))
-                    oscillators.remove(o.to_oscillator)
-                    oscillators.remove(o)
-                else:
-                    routed.append(o.osc)
-        return routed
-
-    def sum_signals(self, signals):
-        return SumFilter(signals)
-
-    def apply_filters(self):       
-        routed_signals = self.do_routing()
-        summed_signal = self.sum_signals(routed_signals)
+            
+    def apply_filters(self):
+        routing = Routing(self.oscillators)
+        carriers = [c for c in routing.get_final_output()]
+        print([str(c) for c in carriers])
+        summed_signal = routing.sum_signals(carriers)
         modulated_output = self.tremolo(summed_signal)
         return modulated_output
 
