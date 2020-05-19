@@ -22,6 +22,7 @@ class Oscillator(ABC):
 class SineWave(Oscillator):
     """
     Pure sine wave oscillator.
+    Modulate flag in blocks() allows for FM modulation.
     """
     def __init__(self, frequency: int = 0, amplitude: int = 1.0, framerate: int = params.framerate, name: str = ""):
         super().__init__(framerate, name)

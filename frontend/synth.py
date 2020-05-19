@@ -15,8 +15,8 @@ class SynthGUI(ttk.Frame):
         self.output = Output()
         self.init_protocols()
         self.generate_oscillators()
-        self.generate_filters()
-        self.generate_input()
+        self.filters_frame()
+        self.input_frame()
         self.playback_frame()
         self.pack()
 
@@ -42,7 +42,7 @@ class SynthGUI(ttk.Frame):
         self.oscillators = []
         self.oscframe = tk.Frame(self)
 
-        for _ in range(2):
+        for _ in range(4):
             osc_nr = len(self.oscillators)
             osc_gui = OscillatorGUI(master_frame=self.oscframe, output=self.output, name=f'Oscillator {str(osc_nr + 1)}')
             osc_gui.pack(side=tk.LEFT, anchor=tk.N, padx=10, pady=10)
@@ -50,21 +50,10 @@ class SynthGUI(ttk.Frame):
 
         for osc in self.oscillators[:-1]:
             osc.FM_frame()
-            ## TO DO
-            # Implement multiple FM send
-            #
-            # if self.first:
-            #     osc.FM_frame()
-            #     self.first = False
-        self.normalise_amplitudes(self.oscillators)
 
         self.oscframe.pack(side=tk.TOP, padx=10, pady=10)
 
-    def normalise_amplitudes(self, oscillators):
-        for o in oscillators:
-            o.osc.amplitude = o.osc.amplitude / len(oscillators)
-
-    def generate_input(self):
+    def input_frame(self):
         """
         Generate midi input gui.
         """
@@ -80,7 +69,7 @@ class SynthGUI(ttk.Frame):
         self.input.bind("<Configure>", self.select_input_device)
         self.input.grid(row=0, column=1, pady=10)
 
-    def generate_filters(self):
+    def filters_frame(self):
         # Tremolo
         self.tremolo_frame = tk.Frame(self)
         self.tremolo_frame.pack(side=tk.TOP, padx=10, pady=10)

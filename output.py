@@ -13,10 +13,11 @@ class Output:
         self.oscillators = []
         self.output = None
 
-    def get_oscillators(self):
-        return self.oscillators
-
     def get_next_oscillators(self, osc):
+        """
+        Get the next oscillators in the sequence.
+        The oscillators are ordered from left to right in the GUI.
+        """
         index = self.oscillators.index(osc)
         return self.oscillators[index + 1:]
 
@@ -24,20 +25,35 @@ class Output:
         self.oscillators.append(oscillator)
 
     def tremolo(self, source):
+        """
+        Apply a tremolo effect.
+        """
         if self.am_modulator:
             return AmpModulationFilter(source=source, modulator=self.am_modulator)
         else:
             return source
-            
-    def apply_filters(self):
+
+    def do_routing(self):
+        """
+        Instantiate a Routing object which outputs the carrier waves after FM modulation.
+        The resulting waves are then summed.
+        """
         routing = Routing(self.oscillators)
-        carriers = [c for c in routing.get_final_output()]
-        print([str(c) for c in carriers])
+        carriers = routing.get_final_output()
         summed_signal = routing.sum_signals(carriers)
-        modulated_output = self.tremolo(summed_signal)
+        return summed_signal
+
+    def apply_filters(self, signal):
+        """
+        Apply filters after routing.
+        """
+        modulated_output = self.tremolo(signal)
         return modulated_output
 
     def set_output_frequency(self, frequency):
+        """
+        Set frequency of (non-modulating) oscillators from external source (e.g midi controller).
+        """
         for o in self.oscillators:
             if o.to_oscillator: pass
             else: 
@@ -45,9 +61,16 @@ class Output:
                 o.frequency.set(frequency)
 
     def play(self):
+        """
+        Perform modulation, filtering and start playback.
+        """
         if self.oscillators:
-            self.output = self.apply_filters()
-            self.audio_api.play(self.output)
+            self.output = self.do_routing()
+            self.filtered_ouput = self.apply_filters(self.output)
+            self.audio_api.play(self.filtered_ouput)
 
     def stop(self):
+        """
+        Stop audio playback
+        """
         self.audio_api.stop()
