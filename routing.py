@@ -17,17 +17,17 @@ class Routing:
         Returns the list of carrier oscillators in self.oscillators
         i.e. they are output oscillators and do not modulate another oscillator.
         """
-        return [o.osc for o in self.oscillators if not o.to_oscillator]
+        return [o.osc for o in self.oscillators if not o.to_oscillators]
 
     def get_parents(self, node):
         """
         For a given oscillater, get list of the nodes that modulate it.
         """
-        parents = {}   
+        parents = {}
         parents[node] = []
         for o in self.oscillators:
-            for i in range(len(o.to_oscillator)):
-                if o.to_oscillator and o.to_oscillator[i].osc == node:
+            for i in range(len(o.to_oscillators)):
+                if o.to_oscillators and o.to_oscillators[i].osc == node:
                     parents[node].append(o.osc)
         return parents[node]
 

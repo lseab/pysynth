@@ -5,6 +5,7 @@ from output import Output
 from midi import MidiController
 from .oscillator import OscillatorGUI
 from .tremolo import TremoloGUI
+from PIL import ImageTk, Image
 
 
 class SynthGUI(ttk.Frame):
@@ -15,6 +16,7 @@ class SynthGUI(ttk.Frame):
         self.output = Output()
         self.init_protocols()
         self.generate_oscillators()
+        self.algorithm_frame()
         self.filters_frame()
         self.input_frame()
         self.playback_frame()
@@ -44,14 +46,48 @@ class SynthGUI(ttk.Frame):
 
         for _ in range(4):
             osc_nr = len(self.oscillators)
-            osc_gui = OscillatorGUI(master_frame=self.oscframe, output=self.output, name=f'Oscillator {str(osc_nr + 1)}')
+            osc_gui = OscillatorGUI(master_frame=self.oscframe, output=self.output, number=osc_nr)
             osc_gui.pack(side=tk.LEFT, anchor=tk.N, padx=10, pady=10)
             self.oscillators.append(osc_gui)
 
-        for osc in self.oscillators[:-1]:
-            osc.FM_frame()
+        for o in self.oscillators[:-1]:
+            o.FM_frame()
 
         self.oscframe.pack(side=tk.TOP, padx=10, pady=10)
+    
+    def filters_frame(self):
+        # Tremolo
+        self.tremolo_frame = tk.Frame(self)
+        self.tremolo_frame.pack(side=tk.TOP, padx=10, pady=10)
+        self.trem_gui = TremoloGUI(self.tremolo_frame, output=self.output, title=f'Tremolo (AM modulation)')
+        self.trem_gui.pack()
+
+    def algorithm_frame(self):
+        self.algo_frame = tk.Frame(self)
+        self.algo_frame.pack(side=tk.TOP, padx=10, pady=10)
+        self.algo_label = tk.Label(self.algo_frame, text="Algorithm:  ", font=('times', 15, 'bold'))
+        self.algo_label.grid(row=0, column=0, padx=20)
+        self.algo_var = tk.StringVar(self.algo_frame, value='parallel')
+        self.algo_var.trace('w', self.change_algorithm)
+        self.stack_image = ImageTk.PhotoImage(Image.open(r'static/stack.png').convert('RGBA').resize((20,100)))
+        self.stack = tk.Radiobutton(self.algo_frame, image=self.stack_image, value='stack', variable=self.algo_var)
+        self.stack.grid(row=0, column=1, padx=20)
+        self.para_image = ImageTk.PhotoImage(Image.open(r'static/parallel.png').convert('RGBA').resize((100,20)))
+        self.parallel = tk.Radiobutton(self.algo_frame, image=self.para_image, value='parallel', variable=self.algo_var)
+        self.parallel.grid(row=0, column=2, padx=20)
+        self.custom = tk.Radiobutton(self.algo_frame, text='custom', value='custom', variable=self.algo_var)
+        self.custom.grid(row=0, column=3, padx=20)
+
+    def change_algorithm(self, *args):
+        if self.algo_var.get() == 'custom':
+            for o in self.oscillators[:-1]:
+                o.fm_frame.pack()
+            self.output.choose_algorthm('parallel')
+            self.output.stop()
+        else:
+            for o in self.oscillators[:-1]:
+                o.fm_frame.pack_forget()
+                self.output.choose_algorthm(self.algo_var.get())
 
     def input_frame(self):
         """
@@ -68,13 +104,6 @@ class SynthGUI(ttk.Frame):
         # callback only triggered on config change
         self.input.bind("<Configure>", self.select_input_device)
         self.input.grid(row=0, column=1, pady=10)
-
-    def filters_frame(self):
-        # Tremolo
-        self.tremolo_frame = tk.Frame(self)
-        self.tremolo_frame.pack(side=tk.TOP, padx=10, pady=10)
-        self.trem_gui = TremoloGUI(self.tremolo_frame, output=self.output, title=f'Tremolo (AM modulation)')
-        self.trem_gui.pack()
 
     def playback_frame(self):
         # Playback frame

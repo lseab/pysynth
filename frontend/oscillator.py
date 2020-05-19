@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 from waveforms import SineWave, SquareWave
 from filters import FreqModulationFilter
+from PIL import ImageTk, Image
+
 
 class FmButton(tk.Frame):
 
@@ -23,9 +25,9 @@ class FmButton(tk.Frame):
         Adds the given oscillator to the list of destination oscillators in the parent.
         """
         if self.osc_input.get():
-            self.gui.to_oscillator.append(self.oscillator)
+            self.gui.to_oscillators.append(self.oscillator)
         else:
-            self.gui.to_oscillator.remove(self.oscillator)
+            self.gui.to_oscillators.remove(self.oscillator)
         self.output.play()
 
 
@@ -33,29 +35,42 @@ class OscillatorGUI(ttk.LabelFrame):
     """
     GUI unit for an oscillator panel.
     """
-    def __init__(self, master_frame, output, name):
-        super().__init__(master_frame, text=name)
-        self.name = name
+    def __init__(self, master_frame, output, number):
+        super().__init__(master_frame)
+        self.number = number
+        self.name = f'Oscillator {str(number + 1)}'
         self.output = output
         self.osc = None
         self.UI()
-        self.to_oscillator = []
+        self.to_oscillators = []
 
     def UI(self):
         """
         Generate UI.
         """
+        self.images = [
+            r'static\osA.png',  
+            r'static\osB.png',
+            r'static\osC.png',
+            r'static\osD.png'
+            ]
+        self.wave_frame = tk.Frame(self)
+        self.wave_frame.pack(padx=10, pady=10)
+        self.wave_icon = ImageTk.PhotoImage(Image.open(self.images[self.number]).convert('RGBA').resize((20,20)))
+        self.image_panel = tk.Label(self.wave_frame, image=self.wave_icon)
+        self.image_panel.grid(row=0, column=0)
+        
         # Waveform choice
         self.waveforms = {
             "sine": SineWave,  
-            "square": SquareWave,
-            "triangle": None,
-            "sawtooth": None,
-            "noise": None
+            "square": SquareWave
+            # "triangle": None,
+            # "sawtooth": None,
+            # "noise": None
             }
         self.input_waveformtype = tk.StringVar()
-        self.waveform = ttk.OptionMenu(self, self.input_waveformtype, 'sine', *self.waveforms.keys(), command=self.create_osc)
-        self.waveform.pack(padx=10, pady=10)
+        self.waveform = ttk.OptionMenu(self.wave_frame, self.input_waveformtype, 'sine', *self.waveforms.keys(), command=self.create_osc)
+        self.waveform.grid(row=0, column=1)
         
         # Set frequency
         self.freq_frame = tk.Frame(self)
@@ -76,7 +91,7 @@ class OscillatorGUI(ttk.LabelFrame):
         """
         # FM frame
         self.fm_frame = tk.Frame(self)
-        self.fm_frame.pack(pady=10)
+        #self.fm_frame.pack(pady=10)
         self.fm_label = tk.Label(self.fm_frame, text="FM to : ", anchor='n')
         self.fm_label.pack(pady=10)
 

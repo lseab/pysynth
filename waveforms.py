@@ -13,6 +13,9 @@ class Oscillator(ABC):
     def __init__(self, framerate: int = 0, name: str = ""):
         self.framerate = framerate
         self.name = name
+
+    def __str__(self):
+        return f'{self.name}'
     
     @abstractmethod
     def blocks(self) -> Generator[List[float], None, None]:
@@ -28,9 +31,6 @@ class SineWave(Oscillator):
         super().__init__(framerate, name)
         self.frequency = frequency
         self.amplitude = amplitude
-
-    def __str__(self):
-        return f'{self.name}'
 
     def blocks(self, modulate=False) -> Generator[List[float], None, None]:
         increment = 2.0 * np.pi / self.framerate
@@ -48,8 +48,8 @@ class SquareWave(Oscillator):
     """
     Pure square wave oscillator.
     """
-    def __init__(self, frequency: int = 0, amplitude: int = 1.0, framerate: int = params.framerate):
-        super().__init__(framerate)
+    def __init__(self, frequency: int = 0, amplitude: int = 1.0, framerate: int = params.framerate, name: str = ""):
+        super().__init__(framerate, name)
         self.frequency = frequency
         self.amplitude = amplitude
 

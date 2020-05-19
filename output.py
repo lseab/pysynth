@@ -5,6 +5,22 @@ from filters import AmpModulationFilter, FreqModulationFilter, SumFilter
 from routing import Routing
 
 
+class Algorithms:
+
+    def __init__(self, oscillators):
+        assert(len(oscillators) == 4)
+        self.oscillators = oscillators
+
+    def stack(self):
+        for n, o in enumerate(self.oscillators):
+            if n < len(self.oscillators) - 1:
+                o.to_oscillators = [self.oscillators[n+1]]
+
+    def parallel(self):
+        for o in self.oscillators:
+            o.to_oscillators = []
+            
+
 class Output:
 
     def __init__(self):
@@ -55,10 +71,18 @@ class Output:
         Set frequency of (non-modulating) oscillators from external source (e.g midi controller).
         """
         for o in self.oscillators:
-            if o.to_oscillator: pass
+            if o.to_oscillators: pass
             else: 
                 o.osc.frequency = frequency
                 o.frequency.set(frequency)
+
+    def choose_algorthm(self, algo):
+        algorithms = Algorithms(self.oscillators)
+        if algo == 'stack':
+            algorithms.stack()
+        if algo == 'parallel':
+            algorithms.parallel()
+        self.play()
 
     def play(self):
         """
