@@ -3,6 +3,32 @@ from tkinter import ttk
 from waveforms import SineWave, SquareWave
 from filters import FreqModulationFilter
 
+class FmButton(tk.Frame):
+
+    def __init__(self, master, gui, oscillator):
+        super().__init__(master)
+        self.master = master
+        self.gui = gui
+        self.output = gui.output
+        self.oscillator = oscillator
+        self.osc_input = tk.IntVar()
+        self.to_option = tk.Checkbutton(self, text=str(oscillator.osc),
+                                        command=self.do_modulate, 
+                                        variable=self.osc_input)
+        self.to_option.grid(row=0, column=1)
+
+    def do_modulate(self):
+        """
+        Callback function from Checkbutton object.
+        Adds the given oscillator to the list of destination oscillators in the parent.
+        """
+        if self.osc_input.get():
+            self.gui.to_oscillator.append(self.oscillator)
+        else:
+            self.gui.to_oscillator.remove(self.oscillator)
+        self.output.play()
+
+
 class OscillatorGUI(ttk.LabelFrame):
     """
     GUI unit for an oscillator panel.
@@ -13,7 +39,7 @@ class OscillatorGUI(ttk.LabelFrame):
         self.output = output
         self.osc = None
         self.UI()
-        self.to_oscillator = None
+        self.to_oscillator = []
 
     def UI(self):
         """
@@ -45,22 +71,22 @@ class OscillatorGUI(ttk.LabelFrame):
         self.create_osc()
 
     def FM_frame(self):
+        """
+        Generate FM frame.
+        """
+        # FM frame
         self.fm_frame = tk.Frame(self)
-        self.fm_frame.pack()
-        self.fm_label = tk.Label(self.fm_frame, text="FM to : ")
-        self.fm_label.grid(row=0, column=0)
-        self.osc_input = tk.StringVar() 
-        self.oscillator_list = {str(o.osc): o for o in self.output.get_next_oscillators(self)}
-        self.oscillator_menu = ttk.OptionMenu(self.fm_frame, self.osc_input, 'None', 'None', *self.oscillator_list.keys(), command=self.do_modulate)        
-        self.oscillator_menu.grid(row=0, column=1)
+        self.fm_frame.pack(pady=10)
+        self.fm_label = tk.Label(self.fm_frame, text="FM to : ", anchor='n')
+        self.fm_label.pack(pady=10)
 
-    def do_modulate(self, *args):
-        if self.osc:
-            if self.osc_input.get() == 'None':
-                self.to_oscillator = None
-            else:
-                self.to_oscillator = self.oscillator_list[self.osc_input.get()]
-            self.output.play()
+        # FM options frame        
+        self.op_frame = tk.Frame(self.fm_frame)
+        self.op_frame.pack()
+
+        for oscillator in self.output.get_next_oscillators(self):
+            self.fm_button = FmButton(self.op_frame, self, oscillator)
+            self.fm_button.pack()
 
     def create_osc(self, *args):
         """
