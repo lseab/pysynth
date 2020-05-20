@@ -1,8 +1,8 @@
-import params
+from pysynth.params import blocksize, framerate
 from copy import copy
-from audio_api import AudioApi
-from filters import AmpModulationFilter, FreqModulationFilter, SumFilter
-from routing import Routing
+from pysynth.audio_api import AudioApi
+from pysynth.filters import AmpModulationFilter, FreqModulationFilter, SumFilter
+from pysynth.routing import Routing
 
 
 class Algorithms:
@@ -24,7 +24,7 @@ class Algorithms:
 class Output:
 
     def __init__(self):
-        self.audio_api = AudioApi(framerate=params.framerate, blocksize=params.blocksize, channels=1)
+        self.audio_api = AudioApi(framerate=framerate, blocksize=blocksize, channels=1)
         self.am_modulator = None
         self.oscillators = []
         self.output = None

@@ -1,5 +1,5 @@
 from copy import copy
-from filters import FreqModulationFilter, SumFilter
+from pysynth.filters import FreqModulationFilter, SumFilter
 
 class Routing:
 

@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
-from waveforms import SineWave, SquareWave
-from filters import FreqModulationFilter
+from pysynth.waveforms import SineWave, SquareWave
+from pysynth.filters import FreqModulationFilter
 from PIL import ImageTk, Image
 
 

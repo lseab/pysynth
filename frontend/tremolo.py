@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from waveforms import SineWave, SquareWave
+from pysynth.waveforms import SineWave, SquareWave
 
 class TremoloGUI(ttk.LabelFrame):
 

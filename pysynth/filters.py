@@ -1,5 +1,5 @@
 import numpy as np
-from waveforms import Oscillator
+from pysynth.waveforms import Oscillator
 from typing import List
 
 class AmpModulationFilter:

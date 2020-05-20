@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
-import params
-from output import Output
-from midi import MidiController
+import pysynth.params
+from pysynth.output import Output
+from pysynth.midi import MidiController
 from .oscillator import OscillatorGUI
 from .tremolo import TremoloGUI
 from PIL import ImageTk, Image
