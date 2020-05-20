@@ -48,7 +48,6 @@ class MidiController:
         """
         self.controller = self._input_device(device_id)
         if self.active:
-            #self.output.play()
             self.midi_thread = Thread(target=self.update_oscillators)
             self.midi_thread.start()
 

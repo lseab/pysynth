@@ -6,6 +6,7 @@ from midi import MidiController
 from .oscillator import OscillatorGUI
 from .tremolo import TremoloGUI
 from PIL import ImageTk, Image
+from .keyboard import KeyboardGUI
 
 
 class SynthGUI(ttk.Frame):
@@ -18,6 +19,7 @@ class SynthGUI(ttk.Frame):
         self.generate_oscillators()
         self.algorithm_frame()
         self.filters_frame()
+        self.keyboard_frame()
         self.input_frame()
         self.playback_frame()
         self.pack()
@@ -47,7 +49,7 @@ class SynthGUI(ttk.Frame):
         for _ in range(4):
             osc_nr = len(self.oscillators)
             osc_gui = OscillatorGUI(master_frame=self.oscframe, output=self.output, number=osc_nr)
-            osc_gui.pack(side=tk.LEFT, anchor=tk.N, padx=10, pady=10)
+            osc_gui.pack(side=tk.LEFT, anchor=tk.N, padx=30, pady=10)
             self.oscillators.append(osc_gui)
 
         for o in self.oscillators[:-1]:
@@ -72,7 +74,7 @@ class SynthGUI(ttk.Frame):
         self.stack_image = ImageTk.PhotoImage(Image.open(r'static/stack.png').convert('RGBA').resize((20,100)))
         self.stack = tk.Radiobutton(self.algo_frame, image=self.stack_image, value='stack', variable=self.algo_var)
         self.stack.grid(row=0, column=1, padx=20)
-        self.para_image = ImageTk.PhotoImage(Image.open(r'static/parallel.png').convert('RGBA').resize((100,20)))
+        self.para_image = ImageTk.PhotoImage(Image.open(r'static/parallel.png').convert('RGBA').resize((90,22)))
         self.parallel = tk.Radiobutton(self.algo_frame, image=self.para_image, value='parallel', variable=self.algo_var)
         self.parallel.grid(row=0, column=2, padx=20)
         self.custom = tk.Radiobutton(self.algo_frame, text='custom', value='custom', variable=self.algo_var)
@@ -88,6 +90,12 @@ class SynthGUI(ttk.Frame):
             for o in self.oscillators[:-1]:
                 o.fm_frame.pack_forget()
                 self.output.choose_algorthm(self.algo_var.get())
+
+    def keyboard_frame(self):
+        self.key_frame = tk.Frame(self)        
+        self.key_frame.pack(side=tk.TOP, padx=10, pady=10)
+        self.keyboard = KeyboardGUI(self.key_frame, self.output)
+        self.keyboard.pack()
 
     def input_frame(self):
         """
