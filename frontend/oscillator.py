@@ -91,7 +91,7 @@ class OscillatorGUI(ttk.LabelFrame):
         """
         # FM frame
         self.fm_frame = tk.Frame(self)
-        #self.fm_frame.pack(pady=10)
+        self.fm_frame.pack()
         self.fm_label = tk.Label(self.fm_frame, text="FM to : ", anchor='n')
         self.fm_label.pack(pady=10)
 

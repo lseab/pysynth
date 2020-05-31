@@ -51,9 +51,6 @@ class SynthGUI(ttk.Frame):
             osc_gui.pack(side=tk.LEFT, anchor=tk.N, padx=30, pady=10)
             self.oscillators.append(osc_gui)
 
-        for o in self.oscillators[:-1]:
-            o.FM_frame()
-
         self.oscframe.pack(side=tk.TOP, padx=10, pady=10)
     
     def filters_frame(self):
@@ -69,7 +66,7 @@ class SynthGUI(ttk.Frame):
         self.algo_label = tk.Label(self.algo_frame, text="Algorithm:  ", font=('times', 15, 'bold'))
         self.algo_label.grid(row=0, column=0, padx=20)
         self.algo_var = tk.StringVar(self.algo_frame, value='parallel')
-        self.algo_var.trace('w', self.change_algorithm)
+        self.algo_var.trace("w", self.change_algorithm)
         self.stack_image = ImageTk.PhotoImage(Image.open(r'static/stack.png').convert('RGBA').resize((20,100)))
         self.stack = tk.Radiobutton(self.algo_frame, image=self.stack_image, value='stack', variable=self.algo_var)
         self.stack.grid(row=0, column=1, padx=20)
@@ -82,12 +79,13 @@ class SynthGUI(ttk.Frame):
     def change_algorithm(self, *args):
         if self.algo_var.get() == 'custom':
             for o in self.oscillators[:-1]:
-                o.fm_frame.pack()
-            self.output.choose_algorthm('parallel')
+                o.FM_frame()
+            self.output.choose_algorthm("parallel")
         else:
             for o in self.oscillators[:-1]:
-                o.fm_frame.pack_forget()
-                self.output.choose_algorthm(self.algo_var.get())
+                try: o.fm_frame.destroy()
+                except: pass
+            self.output.choose_algorthm(self.algo_var.get())
 
     def keyboard_frame(self):
         self.key_frame = tk.Frame(self)        

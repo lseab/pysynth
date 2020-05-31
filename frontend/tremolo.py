@@ -14,9 +14,9 @@ class TremoloGUI(ttk.LabelFrame):
         self.waveforms = {
             "sine": SineWave,  
             "square": SquareWave,
-            "triangle": None,
-            "sawtooth": None,
-            "noise": None
+            # "triangle": None,
+            # "sawtooth": None,
+            # "noise": None
             }
         self.input_waveformtype = tk.StringVar()
         self.waveform = ttk.OptionMenu(self, self.input_waveformtype, '<modulator waveform>', *self.waveforms.keys(), command=self.set_modulator)

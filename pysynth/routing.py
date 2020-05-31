@@ -1,4 +1,5 @@
 from copy import copy
+from collections import ChainMap
 from pysynth.filters import FreqModulationFilter, SumFilter
 
 class Routing:
@@ -23,17 +24,26 @@ class Routing:
         """
         For a given oscillater, get list of the nodes that modulate it.
         """
-        parents = {}
-        parents[node] = []
+        parents = []
         for o in self.oscillators:
             for i in range(len(o.to_oscillators)):
                 if o.to_oscillators and o.to_oscillators[i].osc == node:
-                    parents[node].append(o.osc)
-        return parents[node]
+                    parents.append(o.osc)
+        return parents
 
     def get_mod_tree(self, nodes):
         """
         Recursive method to generate a modulation tree.
+        Returns a nested dictionary where each key is an oscillator whose value
+        is a dictionary of its modulating 'parents'.
+
+        For instance, parallel routing will return a dictionary with the following form:
+
+        {<Oscillator A>: {}, <Oscillator B>: {}, <Oscillator C>: {}, <Oscillator D>: {}}
+
+        Stacked routing will return a dictionary with the following form:
+
+        {<Oscillator A>: {<Oscillator B>: {<Oscillator C>: {<Oscillator D>: {}}}}}
         """
         for n, node in enumerate(nodes):
             node_dict = {}
@@ -41,34 +51,37 @@ class Routing:
             nodes[n] = node_dict
             if len(nodes[n][node]) > 0: 
                 self.get_mod_tree(nodes[n][node])
-        return nodes
+            nodes[n][node] = dict(ChainMap(*nodes[n][node]))
+        return dict(ChainMap(*nodes))
 
-    def do_routing(self, route, prev=None):
-        for el in route:
-            for k in list(el.keys()):
-                if len(el[k]) == 0:
-                    if prev != None:
-                        self.freq_mod = self.freq_modulate(prev, k)
-                        route.remove(el)
-                elif len(el[k]) > 1:
-                    self.do_routing(el[k])
-                    summed = SumFilter([next(iter(o.keys())) for o in el[k]])
-                    freq_mod = self.freq_modulate(k, summed)
-                    el[freq_mod] = []
-                    del el[k]
-                else:
-                    self.do_routing(el[k], k)
-                    if len(el[k]) != 0:
-                        self.do_routing(el[k], k)
-                    el[self.freq_mod] = []
-                    del el[k]
-        return route
+    def do_routing(self, tree):
+        """
+        Iterative function to establish the frequency modulation algorithm.
+        Recursively traverses a nested list of oscillators until it finds an oscillator
+        whose modulating 'parents' are themselves unmodulated. The signals from the parents
+        are then summed, and the node is replaced by an FM object with the node and its summed 
+        parent signals (or single parent signal) as inputs.
+
+        For instance, parallel routing will return the following object:
+
+        [<Oscillator D>, <Oscillator C>, <Oscillator B>, <Oscillator A>]
+
+        Stacked routing will return the following object:
+        
+        FreqMod(<Oscillator D>, FreqMod(<Oscillator C>, FreqMod(<Oscillator B>, <Oscillator A>)))
+        """
+        for node, parents in tree.items():
+            if len(parents.keys()) > 0:
+                self.do_routing(parents)
+                if len(parents.keys()) > 1:
+                    freq_mod = self.freq_modulate(node, SumFilter(parents.keys()))
+                else: freq_mod = self.freq_modulate(node, next(iter(parents.keys())))
+                del tree[node]
+                tree[freq_mod] = {}
+        return list(tree.keys())
 
     def get_final_output(self):
         final_output = []
         carriers = self.get_carriers()
         tree = self.get_mod_tree(carriers)
-        for branch in tree:
-            routed = self.do_routing([branch])
-            final_output.append([next(iter(o.keys())) for o in routed][0])
-        return final_output
+        return self.do_routing(tree)
