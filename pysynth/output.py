@@ -27,7 +27,11 @@ class Output:
         self.audio_api = AudioApi(framerate=framerate, blocksize=blocksize, channels=1)
         self.am_modulator = None
         self.oscillators = []
-        self.output = None
+        self.filtered_ouput = None
+
+    def set_am_modulator(self, waveform):
+        self.am_modulator = waveform
+        self.route_and_filter()
 
     def get_next_oscillators(self, osc):
         """
@@ -39,6 +43,7 @@ class Output:
 
     def add_oscillator(self, oscillator):
         self.oscillators.append(oscillator)
+        self.route_and_filter()
 
     def tremolo(self, source):
         """
@@ -49,15 +54,19 @@ class Output:
         else:
             return source
 
-    def do_routing(self):
+    def route_and_filter(self):
         """
         Instantiate a Routing object which outputs the carrier waves after FM modulation.
-        The resulting waves are then summed.
+        The resulting waves are then summed, and filters applied.
         """
         routing = Routing(self.oscillators)
         carriers = routing.get_final_output()
-        summed_signal = routing.sum_signals(carriers)
-        return summed_signal
+        if len(carriers) > 1: 
+            output = routing.sum_signals(carriers)
+        else: output = carriers[0]
+        self.filtered_ouput = self.apply_filters(output)
+        if self.audio_api.playing == True:
+            self.play()
 
     def apply_filters(self, signal):
         """
@@ -82,16 +91,13 @@ class Output:
             algorithms.stack()
         if algo == 'parallel':
             algorithms.parallel()
-        self.play()
+        self.route_and_filter()
 
     def play(self):
         """
         Perform modulation, filtering and start playback.
         """
-        if self.oscillators:
-            self.output = self.do_routing()
-            self.filtered_ouput = self.apply_filters(self.output)
-            self.audio_api.play(self.filtered_ouput)
+        self.audio_api.play(self.filtered_ouput)
 
     def stop(self):
         """

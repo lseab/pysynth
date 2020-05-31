@@ -28,7 +28,7 @@ class FmButton(tk.Frame):
             self.gui.to_oscillators.append(self.oscillator)
         else:
             self.gui.to_oscillators.remove(self.oscillator)
-        self.output.play()
+        self.gui.output.route_and_filter()
 
 
 class OscillatorGUI(ttk.LabelFrame):
@@ -40,9 +40,9 @@ class OscillatorGUI(ttk.LabelFrame):
         self.number = number
         self.name = f'Oscillator {str(number + 1)}'
         self.output = output
-        self.osc = None
-        self.UI()
+        self.osc = None        
         self.to_oscillators = []
+        self.UI()
 
     def UI(self):
         """

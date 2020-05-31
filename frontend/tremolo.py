@@ -41,9 +41,8 @@ class TremoloGUI(ttk.LabelFrame):
     def set_modulator(self, *args):
         freq = self.frequency.get()
         waveform = self.waveforms[self.input_waveformtype.get()]
-        self.output.am_modulator = waveform()
+        self.output.set_am_modulator(waveform())
         self.set_frequency()
-        self.output.play()
 
     def set_frequency(self, *args):
         if self.output.am_modulator:

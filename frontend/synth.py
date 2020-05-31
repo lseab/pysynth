@@ -21,7 +21,6 @@ class SynthGUI(ttk.Frame):
         self.filters_frame()
         self.keyboard_frame()
         self.input_frame()
-        self.playback_frame()
         self.pack()
 
     def init_protocols(self):
@@ -85,7 +84,6 @@ class SynthGUI(ttk.Frame):
             for o in self.oscillators[:-1]:
                 o.fm_frame.pack()
             self.output.choose_algorthm('parallel')
-            self.output.stop()
         else:
             for o in self.oscillators[:-1]:
                 o.fm_frame.pack_forget()
@@ -113,17 +111,6 @@ class SynthGUI(ttk.Frame):
         self.input.bind("<Configure>", self.select_input_device)
         self.input.grid(row=0, column=1, pady=10)
 
-    def playback_frame(self):
-        # Playback frame
-        self.play_frame = tk.Frame(self.inputFrame)
-        self.play_frame.grid(row=0, column=2, padx=20)
-        # Play button
-        self.play_btn = ttk.Button(self.play_frame, text="Play", command=self.play)
-        self.play_btn.grid(row=0, column=2, padx=5, pady=10)
-        # Stop button
-        self.stop_btn = ttk.Button(self.play_frame, text="Stop", command=self.stop)
-        self.stop_btn.grid(row=0, column=3, padx=5, pady=10)
-
     def select_input_device(self, *args):
         """
         Called upon change in the input_device menu.
@@ -132,15 +119,3 @@ class SynthGUI(ttk.Frame):
         selection = self.input_device.get()
         device_id = self.controller.get_input_devices()[selection]
         self.controller.set_input_device(device_id)
-    
-    def play(self):
-        """
-        Call play on audio interface.
-        """
-        self.output.play()
-
-    def stop(self):
-        """
-        Call stop on audio interface.
-        """
-        self.output.stop()

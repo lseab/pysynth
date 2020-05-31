@@ -1,9 +1,9 @@
-import params
+from pysynth import params
 import time
-from midi import MidiController
-from audio_api import AudioApi
-from waveforms import *
-from filters import *
+from pysynth.midi import MidiController
+from pysynth.audio_api import AudioApi
+from pysynth.waveforms import *
+from pysynth.filters import *
 
 ### Amplitude Modulation
 
