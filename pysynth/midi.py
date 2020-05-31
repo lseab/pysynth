@@ -1,6 +1,26 @@
 import pygame.midi as midi
+from pygame import time
 from pygame.midi import MidiException
 from threading import Thread
+
+
+class MidiEvent:
+
+    def __init__(self, midi_output):
+        self.data = midi_output[0]
+        self.timestamp = midi_output[1]
+        self._event_type = self.data[0] #key press or release
+        self.note_number = self.data[1]
+        self.velocity = self.data[2]
+        self.frequency = midi.midi_to_frequency(self.note_number)    
+
+    @property
+    def event_type(self):
+        if self._event_type == 144:
+            return "On"
+        elif self._event_type == 128:
+            return "Off"   
+
 
 class MidiController:
 
@@ -10,7 +30,6 @@ class MidiController:
         self.input_devices = self.get_input_devices()
         self.default_device_id = midi.get_default_input_id()
         self.controller = None
-        self._frequency = 0
         self.midi_thread = None
         self.output = output
 
@@ -30,7 +49,7 @@ class MidiController:
         """
         Queries midi interface for available devices.
         Checks that they are input devices (third element in return tuple corresponds to input flag, 1 if input else 0).
-        Returns a dict of the form {device_name: device_id} device_id = -1 corresponds to no device.
+        Returns a dict of the form {device_name: device_id}, device_id = -1 corresponds to no device.
         """
         input_devices = {}
 
@@ -72,6 +91,7 @@ class MidiController:
         event = self.controller.read(1)[0]
         data = event[0]
         timestamp = event[1]
+        event_type = data[0] #key press or release
         note_number = data[1]
         velocity = data[2]
         self._frequency = midi.midi_to_frequency(note_number)
@@ -81,12 +101,18 @@ class MidiController:
         Extract midi info from controller if active and update oscillators.
         """
         while self.active:
-            if self.controller.poll():
-                self.read_input()
-                try:
-                    self.output.set_output_frequency(int(self.frequency))
-                except AttributeError:
-                    pass
+            if self.controller.poll():                
+                midi_event = MidiEvent(self.controller.read(1)[0])
+                if midi_event.event_type == "On":
+                    try:
+                        self.output.stop()
+                        self.output.set_output_frequency(int(midi_event.frequency))
+                        self.output.play()
+                    except AttributeError:
+                        pass
+                elif midi_event.event_type == "Off":
+                    self.output.stop()
+            time.wait(10)
 
     def close_controller(self):
         """

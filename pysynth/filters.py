@@ -2,6 +2,7 @@ import numpy as np
 from pysynth.waveforms import Oscillator
 from typing import List
 
+
 class AmpModulationFilter:
     """
     Amplitude modulater. Takes a source oscillator and a modulating oscillator as inputs and generates a modulated signal.
@@ -14,6 +15,7 @@ class AmpModulationFilter:
         while True:
             am_envelope = [(1.0 + i) for i in next(self.modulator)]
             yield [e * s for (e, s) in zip(am_envelope, next(self.source))]
+
 
 class FreqModulationFilter:
     """
