@@ -100,10 +100,11 @@ class Output:
         Set frequency of (non-modulating) oscillators from external source (e.g midi controller).
         """
         for o in self.oscillators:
-            if o.to_oscillators: pass
-            else: 
-                o.osc.frequency = frequency
-                o.frequency.set(frequency)
+            if o.fixed_frequency(): pass
+            else:
+                ratio = o.ratio()
+                o.osc.frequency = frequency * ratio
+                o.frequency_var.set(frequency * ratio)
 
     def choose_algorithm(self, algo):
         algorithms = Algorithms(self.oscillators)

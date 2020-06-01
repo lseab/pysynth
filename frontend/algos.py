@@ -15,14 +15,14 @@ class AlgorithmGUI(tk.Frame):
         self.algo_buttons()
 
     def algo_buttons(self):
-        # Stack Algorithm
-        self.stack_image = ImageTk.PhotoImage(Image.open(r'static/algorithms/stack.png').convert('RGBA').resize((20,100)))
-        self.stack = tk.Radiobutton(self, image=self.stack_image, value='stack', variable=self.algo_var)
-        self.stack.grid(row=0, column=1, padx=20)
         # Parallel Algorithm
         self.para_image = ImageTk.PhotoImage(Image.open(r'static/algorithms/parallel.png').convert('RGBA').resize((90,22)))
         self.parallel = tk.Radiobutton(self, image=self.para_image, value='parallel', variable=self.algo_var)
-        self.parallel.grid(row=0, column=2, padx=20)
+        self.parallel.grid(row=0, column=1, padx=20)
+        # Stack Algorithm
+        self.stack_image = ImageTk.PhotoImage(Image.open(r'static/algorithms/stack.png').convert('RGBA').resize((20,100)))
+        self.stack = tk.Radiobutton(self, image=self.stack_image, value='stack', variable=self.algo_var)
+        self.stack.grid(row=0, column=2, padx=20)
         # Square Algorithm
         self.square_image = ImageTk.PhotoImage(Image.open(r'static/algorithms/square.png').convert('RGBA').resize((40,45)))
         self.square = tk.Radiobutton(self, image=self.square_image, value='square', variable=self.algo_var)
