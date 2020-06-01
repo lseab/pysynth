@@ -56,11 +56,14 @@ class OscillatorGUI(ttk.LabelFrame):
             r'static\oscillators\osC.png',
             r'static\oscillators\osD.png'
             ]
+            
         self.wave_frame = tk.Frame(self)
-        self.wave_frame.pack(padx=10, pady=10)
-        self.wave_icon = ImageTk.PhotoImage(Image.open(self.images[self.number]).convert('RGBA').resize((20,20)))
+        self.wave_frame.pack(padx=10, pady=10)        
+        self.image = Image.open(self.images[self.number]).convert('RGBA').resize((20,20))        
+        self.wave_icon = ImageTk.PhotoImage(self.image)
         self.image_panel = tk.Label(self.wave_frame, image=self.wave_icon)
         self.image_panel.grid(row=0, column=0)
+        self.image_panel.bind("<Button-1>", self.disable_osc)
         
         # Waveform choice
         self.waveforms = {
@@ -73,8 +76,10 @@ class OscillatorGUI(ttk.LabelFrame):
         self.input_waveformtype = tk.StringVar()
         self.waveform = ttk.OptionMenu(self.wave_frame, self.input_waveformtype, 'sine', *self.waveforms.keys(), command=self.create_osc)
         self.waveform.grid(row=0, column=1)
-        
+
         # Generate frequency frame
+        self.ui_frame = tk.Frame(self)
+        self.ui_frame.pack()
         self.set_freq_frame()
 
         # Create oscillator object on creation.
@@ -82,7 +87,7 @@ class OscillatorGUI(ttk.LabelFrame):
         self.create_osc()
 
     def set_freq_frame(self):
-        self.freq_frame = tk.Frame(self)
+        self.freq_frame = tk.Frame(self.ui_frame)
         self.fixed_var = tk.BooleanVar(value=0)
         self.freq_fixed = tk.Checkbutton(self.freq_frame, text="Fixed", variable=self.fixed_var, command=self.set_ratio_frame)
         self.freq_fixed.pack()
@@ -126,7 +131,7 @@ class OscillatorGUI(ttk.LabelFrame):
         Generate FM frame.
         """
         # FM frame
-        self.fm_frame = tk.Frame(self)
+        self.fm_frame = tk.Frame(self.ui_frame)
         self.fm_frame.pack()
         self.fm_label = tk.Label(self.fm_frame, text="FM to : ", anchor='n')
         self.fm_label.pack(pady=10)
@@ -143,11 +148,27 @@ class OscillatorGUI(ttk.LabelFrame):
         """
         Instantiate oscillator after waveform type selection.
         """
-        waveform = self.waveforms[self.input_waveformtype.get()]
-        self.osc = waveform(name=self.name)
+        self.waveform_choice = self.waveforms[self.input_waveformtype.get()]
+        self.osc = self.waveform_choice(name=self.name)
         self.output.add_oscillator(self)
         self.set_frequency()
         self.freq_frame.pack()
+
+    def disable_osc(self, *args):
+        if str(self.waveform["state"]) == "normal":
+            self.ui_frame.pack_forget()
+            bw_image = self.image.convert('L')
+            self.wave_icon = ImageTk.PhotoImage(bw_image)
+            self.image_panel.configure(image=self.wave_icon)
+            self.waveform["state"] = "disabled"
+            self.osc = SineWave.empty()
+        else:
+            self.ui_frame.pack()
+            self.wave_icon = ImageTk.PhotoImage(self.image)
+            self.image_panel.configure(image=self.wave_icon)
+            self.waveform["state"] = "normal"
+            self.osc = self.waveform_choice(name=self.name)
+        self.output.route_and_filter()
 
     def set_frequency(self, *args):
         """

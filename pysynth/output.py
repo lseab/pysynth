@@ -99,7 +99,8 @@ class Output:
         """
         Set frequency of (non-modulating) oscillators from external source (e.g midi controller).
         """
-        for o in self.oscillators:
+        filtered_oscillators = [o for o in self.oscillators if not o.osc.disabled]
+        for o in filtered_oscillators:
             if o.fixed_frequency(): pass
             else:
                 ratio = o.ratio()

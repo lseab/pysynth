@@ -23,22 +23,21 @@ class FreqModulationFilter:
     """
     def __init__(self, source: Oscillator, modulator: Oscillator, amplitude: float = 1.0):
         self.source = source
-        self.source_blocks = source.blocks()
+        self.source_blocks = source.blocks(modulate=True)
         self.modulator = modulator
         self.mod_blocks = modulator.blocks()
-        self.amplitude = amplitude
+        self.amplitude = self.source.amplitude
 
     def __str__(self):
         return f'FreqMod({self.source}, {self.modulator})'
 
     def blocks(self, modulate=False):
         while True:
-            modulation = [s + m for (s, m) in zip(next(self.source_blocks), next(self.mod_blocks))]  
+            modulation = [s + m for (s, m) in zip(next(self.source_blocks), next(self.mod_blocks))]
             if modulate:
                 yield modulation               
             else:
-                yield np.cos(modulation)
-
+                yield self.amplitude * np.cos(modulation)
 
 class SumFilter:
     """
