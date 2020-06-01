@@ -5,8 +5,8 @@ from pysynth.output import Output
 from pysynth.midi import MidiController
 from .oscillator import OscillatorGUI
 from .tremolo import TremoloGUI
-from PIL import ImageTk, Image
 from .keyboard import KeyboardGUI
+from .algos import AlgorithmGUI
 
 
 class SynthGUI(ttk.Frame):
@@ -52,40 +52,17 @@ class SynthGUI(ttk.Frame):
             self.oscillators.append(osc_gui)
 
         self.oscframe.pack(side=tk.TOP, padx=10, pady=10)
-    
+
+    def algorithm_frame(self):
+        self.algo_frame = AlgorithmGUI(self)
+        self.algo_frame.pack(side=tk.TOP, padx=10, pady=10)
+
     def filters_frame(self):
         # Tremolo
         self.tremolo_frame = tk.Frame(self)
         self.tremolo_frame.pack(side=tk.TOP, padx=10, pady=10)
         self.trem_gui = TremoloGUI(self.tremolo_frame, output=self.output, title=f'Tremolo (AM modulation)')
         self.trem_gui.pack()
-
-    def algorithm_frame(self):
-        self.algo_frame = tk.Frame(self)
-        self.algo_frame.pack(side=tk.TOP, padx=10, pady=10)
-        self.algo_label = tk.Label(self.algo_frame, text="Algorithm:  ", font=('times', 15, 'bold'))
-        self.algo_label.grid(row=0, column=0, padx=20)
-        self.algo_var = tk.StringVar(self.algo_frame, value='parallel')
-        self.algo_var.trace("w", self.change_algorithm)
-        self.stack_image = ImageTk.PhotoImage(Image.open(r'static/stack.png').convert('RGBA').resize((20,100)))
-        self.stack = tk.Radiobutton(self.algo_frame, image=self.stack_image, value='stack', variable=self.algo_var)
-        self.stack.grid(row=0, column=1, padx=20)
-        self.para_image = ImageTk.PhotoImage(Image.open(r'static/parallel.png').convert('RGBA').resize((90,22)))
-        self.parallel = tk.Radiobutton(self.algo_frame, image=self.para_image, value='parallel', variable=self.algo_var)
-        self.parallel.grid(row=0, column=2, padx=20)
-        self.custom = tk.Radiobutton(self.algo_frame, text='custom', value='custom', variable=self.algo_var)
-        self.custom.grid(row=0, column=3, padx=20)
-
-    def change_algorithm(self, *args):
-        if self.algo_var.get() == 'custom':
-            for o in self.oscillators[:-1]:
-                o.FM_frame()
-            self.output.choose_algorthm("parallel")
-        else:
-            for o in self.oscillators[:-1]:
-                try: o.fm_frame.destroy()
-                except: pass
-            self.output.choose_algorthm(self.algo_var.get())
 
     def keyboard_frame(self):
         self.key_frame = tk.Frame(self)        

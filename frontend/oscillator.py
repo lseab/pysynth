@@ -1,4 +1,5 @@
 import tkinter as tk
+import string
 from tkinter import ttk
 from pysynth.waveforms import SineWave, SquareWave
 from pysynth.filters import FreqModulationFilter
@@ -38,10 +39,11 @@ class OscillatorGUI(ttk.LabelFrame):
     def __init__(self, master_frame, output, number):
         super().__init__(master_frame)
         self.number = number
-        self.name = f'Oscillator {str(number + 1)}'
+        self.name = f'Oscillator {string.ascii_uppercase[number]}'
         self.output = output
         self.osc = None        
         self.to_oscillators = []
+        self.fm_frame = None
         self.UI()
 
     def UI(self):
@@ -49,10 +51,10 @@ class OscillatorGUI(ttk.LabelFrame):
         Generate UI.
         """
         self.images = [
-            r'static\osA.png',  
-            r'static\osB.png',
-            r'static\osC.png',
-            r'static\osD.png'
+            r'static\oscillators\osA.png',  
+            r'static\oscillators\osB.png',
+            r'static\oscillators\osC.png',
+            r'static\oscillators\osD.png'
             ]
         self.wave_frame = tk.Frame(self)
         self.wave_frame.pack(padx=10, pady=10)

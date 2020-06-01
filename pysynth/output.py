@@ -19,6 +19,26 @@ class Algorithms:
     def parallel(self):
         for o in self.oscillators:
             o.to_oscillators = []
+
+    def square(self):
+        for n, o in enumerate(self.oscillators):
+            o.to_oscillators = []
+            if n % 2 == 0:
+                o.to_oscillators = [self.oscillators[n+1]]
+
+    def three_to_one(self):
+        for n, o in enumerate(self.oscillators):
+            o.to_oscillators = []
+            if n < len(self.oscillators) - 1:
+                o.to_oscillators = [self.oscillators[-1]]
+
+    def algorithm_switch(self):
+        return {
+            "stack": self.stack,
+            "parallel": self.parallel,
+            "square": self.square,
+            "3to1": self.three_to_one
+        }
             
 
 class Output:
@@ -85,12 +105,10 @@ class Output:
                 o.osc.frequency = frequency
                 o.frequency.set(frequency)
 
-    def choose_algorthm(self, algo):
+    def choose_algorithm(self, algo):
         algorithms = Algorithms(self.oscillators)
-        if algo == 'stack':
-            algorithms.stack()
-        if algo == 'parallel':
-            algorithms.parallel()
+        algo_function = algorithms.algorithm_switch().get(algo)
+        algo_function()
         self.route_and_filter()
 
     def play(self):
