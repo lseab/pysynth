@@ -1,13 +1,24 @@
 import numpy as np
+from abc import ABC
 from pysynth.waveforms import Oscillator
 from typing import List
 
 
-class AmpModulationFilter:
+class Filter(ABC):
+    """
+    Abstract class for all filter objects.
+    """
+    def __init__(self, sources: List[Oscillator]):
+        self.sources = sources        
+        self.framerate = sources[0].framerate if sources else 0
+
+
+class AmpModulationFilter(Filter):
     """
     Amplitude modulater. Takes a source oscillator and a modulating oscillator as inputs and generates a modulated signal.
     """
     def __init__(self, source: Oscillator, modulator: Oscillator):
+        super().__init__([source])
         self.source = source.blocks()
         self.modulator = modulator.blocks()
 
@@ -17,11 +28,12 @@ class AmpModulationFilter:
             yield [e * s for (e, s) in zip(am_envelope, next(self.source))]
 
 
-class FreqModulationFilter:
+class FreqModulationFilter(Filter):
     """
     Frequncy modulater. Takes a source oscillator and a modulating oscillator as inputs and generates a modulated signal.
     """
     def __init__(self, source: Oscillator, modulator: Oscillator, amplitude: float = 1.0):
+        super().__init__([source])
         self.source = source
         self.source_blocks = source.blocks(modulate=True)
         self.modulator = modulator
@@ -39,12 +51,12 @@ class FreqModulationFilter:
             else:
                 yield self.amplitude * np.cos(modulation)
 
-class SumFilter:
+class SumFilter(Filter):
     """
     Takes multiple oscillators as input generates a single output from them.
     """
     def __init__(self, sources: List[Oscillator], amplitude: float = 1.0):
-        self.sources = sources
+        super().__init__(list(sources))
         self.amplitude = amplitude
         self.normalise_amplitude()
 
@@ -60,3 +72,16 @@ class SumFilter:
         while True:            
             blocks = next(source_blocks)
             yield [self.amplitude * sum(v) for v in zip(*blocks)]
+
+
+class Envelope(Filter):
+    def __init__(self, source: Oscillator, attack: float):
+        super().__init__([source])
+        self.source = source.blocks()
+        self.attack = attack
+
+    def blocks(self):
+        amplitude = 0.0
+        while True:
+            amplitude += 2048 / (self.attack * self.framerate)
+            yield [source * amplitude for source in next(self.source)]

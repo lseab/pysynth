@@ -31,7 +31,7 @@ class SineWave(Oscillator):
     Pure sine wave oscillator.
     Modulate flag in blocks() allows for FM modulation.
     """
-    def __init__(self, frequency: int = 0, amplitude: int = 1, framerate: int = framerate, name: str = "", disabled: bool = False):
+    def __init__(self, frequency: float = 0.0, amplitude: float = 1.0, framerate: int = framerate, name: str = "", disabled: bool = False):
         super().__init__(frequency, amplitude, framerate, name, disabled)
 
     def blocks(self, modulate=False) -> Generator[List[float], None, None]:
@@ -55,10 +55,10 @@ class SquareWave(Oscillator):
     """
     Pure square wave oscillator.
     """
-    def __init__(self, frequency: int = 0, amplitude: int = 1, framerate: int = framerate, name: str = "", disabled: bool = False):
+    def __init__(self, frequency: float = 0.0, amplitude: float = 1.0, framerate: int = framerate, name: str = "", disabled: bool = False):
         super().__init__(frequency, amplitude, framerate, name, disabled)
 
-    def blocks(self) -> Generator[List[float], None, None]:
+    def blocks(self, modulate=False) -> Generator[List[float], None, None]:
         increment = 1.0 / self.framerate
         t = 0.0
         while True:

@@ -1,7 +1,7 @@
 from pysynth.params import blocksize, framerate
 from copy import copy
 from pysynth.audio_api import AudioApi
-from pysynth.filters import AmpModulationFilter, FreqModulationFilter, SumFilter
+from pysynth.filters import AmpModulationFilter, FreqModulationFilter, SumFilter, Envelope
 from pysynth.routing import Routing
 
 
@@ -61,8 +61,8 @@ class Output:
         index = self.oscillators.index(osc)
         return self.oscillators[index + 1:]
 
-    def add_oscillator(self, oscillator):
-        self.oscillators.append(oscillator)
+    def add_oscillator(self, oscillator, index):
+        self.oscillators.insert(index, oscillator)
         self.route_and_filter()
 
     def tremolo(self, source):

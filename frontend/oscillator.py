@@ -94,7 +94,7 @@ class OscillatorGUI(ttk.LabelFrame):
         self.input_freq_frame = tk.Frame(self.freq_frame)
         self.freq_label = tk.Label(self.input_freq_frame, text="Freq. (Hz)")
         self.freq_label.grid(row=1, column=0)
-        self.frequency_var = tk.IntVar(value=440)
+        self.frequency_var = tk.DoubleVar(value=440.0)
         self.input_freq = tk.Entry(self.input_freq_frame, width=10, textvariable=self.frequency_var)
         self.input_freq.grid(row=1, column=1, pady=10)
         self.input_freq.bind('<Return>', self.set_frequency)
@@ -148,9 +148,11 @@ class OscillatorGUI(ttk.LabelFrame):
         """
         Instantiate oscillator after waveform type selection.
         """
+        if self.osc is not None:
+            del self.output.oscillators[self.number]
         self.waveform_choice = self.waveforms[self.input_waveformtype.get()]
         self.osc = self.waveform_choice(name=self.name)
-        self.output.add_oscillator(self)
+        self.output.add_oscillator(self, index=self.number)
         self.set_frequency()
         self.freq_frame.pack()
 
@@ -174,4 +176,4 @@ class OscillatorGUI(ttk.LabelFrame):
         """
         Set frequency to input value.
         """
-        if self.osc: self.osc.frequency= int(self.input_freq.get())
+        if self.osc: self.osc.frequency= float(self.input_freq.get())
