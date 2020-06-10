@@ -11,12 +11,15 @@ class Oscillator(ABC):
     Requires a List[float] generator for instantiation.
     """
     def __init__(self, frequency, amplitude, framerate, name, disabled):
-        if disabled: frequency = amplitude = 0
+        if disabled: frequency = amplitude = 0.0
         self.disabled = disabled
         self.frequency = frequency
         self.amplitude = amplitude
         self.framerate = framerate
         self.name = name
+        self.to_oscillators = []        
+        self.fixed_frequency = False
+        self.frequency_ratio = 1.0
 
     def __str__(self):
         return f'{self.name}'

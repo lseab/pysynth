@@ -47,7 +47,7 @@ class Output:
         self.audio_api = AudioApi(framerate=framerate, blocksize=blocksize, channels=1)
         self.am_modulator = None
         self.oscillators = []
-        self.filtered_ouput = None
+        self.filtered_output = None
 
     def set_am_modulator(self, waveform):
         self.am_modulator = waveform
@@ -84,7 +84,7 @@ class Output:
         if len(carriers) > 1: 
             output = routing.sum_signals(carriers)
         else: output = carriers[0]
-        self.filtered_ouput = self.apply_filters(output)
+        self.filtered_output = self.apply_filters(output)
         if self.audio_api.playing == True:
             self.play()
 
@@ -92,6 +92,7 @@ class Output:
         """
         Apply filters after routing.
         """
+        # modulated_output = Envelope(self.tremolo(signal), attack=2)
         modulated_output = self.tremolo(signal)
         return modulated_output
 
@@ -99,13 +100,12 @@ class Output:
         """
         Set frequency of (non-modulating) oscillators from external source (e.g midi controller).
         """
-        filtered_oscillators = [o for o in self.oscillators if not o.osc.disabled]
+        filtered_oscillators = [o for o in self.oscillators if not o.disabled]
         for o in filtered_oscillators:
-            if o.fixed_frequency(): pass
+            if o.fixed_frequency: pass
             else:
-                ratio = o.ratio()
-                o.osc.frequency = frequency * ratio
-                o.frequency_var.set(frequency * ratio)
+                ratio = o.frequency_ratio
+                o.frequency = frequency * ratio
 
     def choose_algorithm(self, algo):
         algorithms = Algorithms(self.oscillators)
@@ -117,7 +117,7 @@ class Output:
         """
         Perform modulation, filtering and start playback.
         """
-        self.audio_api.play(self.filtered_ouput)
+        self.audio_api.play(self.filtered_output)
 
     def stop(self):
         """

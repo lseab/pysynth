@@ -15,7 +15,7 @@ class FmButton(tk.Frame):
         self.output = gui.output
         self.oscillator = oscillator
         self.osc_input = tk.IntVar()
-        self.to_option = tk.Checkbutton(self, text=str(oscillator.osc),
+        self.to_option = tk.Checkbutton(self, text=str(oscillator),
                                         command=self.do_modulate, 
                                         variable=self.osc_input)
         self.to_option.grid(row=0, column=1)
@@ -26,9 +26,9 @@ class FmButton(tk.Frame):
         Adds the given oscillator to the list of destination oscillators in the parent.
         """
         if self.osc_input.get():
-            self.gui.to_oscillators.append(self.oscillator)
+            self.gui.osc.to_oscillators.append(self.oscillator)
         else:
-            self.gui.to_oscillators.remove(self.oscillator)
+            self.gui.osc.to_oscillators.remove(self.oscillator)
         self.gui.output.route_and_filter()
 
 
@@ -42,7 +42,6 @@ class OscillatorGUI(ttk.LabelFrame):
         self.name = f'Oscillator {string.ascii_uppercase[number]}'
         self.output = output
         self.osc = None        
-        self.to_oscillators = []
         self.fm_frame = None
         self.UI()
 
@@ -105,13 +104,14 @@ class OscillatorGUI(ttk.LabelFrame):
         self.ratio_var = tk.DoubleVar(value=1.0)
         self.input_ratio = tk.Entry(self.ratio_frame, width=10, textvariable=self.ratio_var)
         self.input_ratio.grid(row=0, column=1, pady=10)
+        self.input_ratio.bind('<Configure>', self.set_frequency_ratio)
         self.set_ratio_frame()
 
-    def ratio(self):
-        return self.ratio_var.get()
-
-    def fixed_frequency(self):
-        return self.fixed_var.get()
+    def set_frequency_ratio(self, *args):
+        try:
+            self.osc.frequency_ratio = float(self.input_ratio.get())
+        except:
+            pass
 
     def set_ratio_frame(self):
         """
@@ -120,10 +120,13 @@ class OscillatorGUI(ttk.LabelFrame):
         Otherwise enty widget is disabled and user can input a ratio.
         """
         if self.fixed_var.get() == 0:
-            self.input_freq['state'] = "disabled"
+            self.input_freq_frame.pack_forget()
+            if self.osc is not None: self.osc.fixed_frequency = False
             self.ratio_frame.pack()
         else:
-            self.input_freq['state'] = "normal"
+            self.input_freq_frame.pack()
+            self.set_frequency()
+            if self.osc is not None: self.osc.fixed_frequency = True
             self.ratio_frame.pack_forget()
 
     def FM_frame(self):
@@ -140,7 +143,7 @@ class OscillatorGUI(ttk.LabelFrame):
         self.op_frame = tk.Frame(self.fm_frame)
         self.op_frame.pack()
 
-        for oscillator in self.output.get_next_oscillators(self):
+        for oscillator in self.output.get_next_oscillators(self.osc):
             self.fm_button = FmButton(self.op_frame, self, oscillator)
             self.fm_button.pack()
 
@@ -152,7 +155,7 @@ class OscillatorGUI(ttk.LabelFrame):
             del self.output.oscillators[self.number]
         self.waveform_choice = self.waveforms[self.input_waveformtype.get()]
         self.osc = self.waveform_choice(name=self.name)
-        self.output.add_oscillator(self, index=self.number)
+        self.output.add_oscillator(self.osc, index=self.number)
         self.set_frequency()
         self.freq_frame.pack()
 
@@ -163,13 +166,13 @@ class OscillatorGUI(ttk.LabelFrame):
             self.wave_icon = ImageTk.PhotoImage(bw_image)
             self.image_panel.configure(image=self.wave_icon)
             self.waveform["state"] = "disabled"
-            self.osc = SineWave.empty()
+            self.osc = self.output.oscillators[self.number] = SineWave.empty()
         else:
             self.ui_frame.pack()
             self.wave_icon = ImageTk.PhotoImage(self.image)
             self.image_panel.configure(image=self.wave_icon)
             self.waveform["state"] = "normal"
-            self.osc = self.waveform_choice(name=self.name)
+            self.osc = self.output.oscillators[self.number] = self.waveform_choice(name=self.name)
         self.output.route_and_filter()
 
     def set_frequency(self, *args):

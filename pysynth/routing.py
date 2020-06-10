@@ -18,7 +18,7 @@ class Routing:
         Returns the list of carrier oscillators in self.oscillators
         i.e. they are output oscillators and do not modulate another oscillator.
         """
-        return [o.osc for o in self.oscillators if not o.to_oscillators]
+        return [o for o in self.oscillators if not o.to_oscillators]
 
     def get_parents(self, node):
         """
@@ -27,8 +27,8 @@ class Routing:
         parents = []
         for o in self.oscillators:
             for i in range(len(o.to_oscillators)):
-                if o.to_oscillators and o.to_oscillators[i].osc == node:
-                    parents.append(o.osc)
+                if o.to_oscillators and o.to_oscillators[i] == node:
+                    parents.append(o)
         return parents
 
     def get_mod_tree(self, nodes):
@@ -81,7 +81,6 @@ class Routing:
         return list(tree.keys())
 
     def get_final_output(self):
-        final_output = []
         carriers = self.get_carriers()
         tree = self.get_mod_tree(carriers)
         return self.do_routing(tree)

@@ -83,19 +83,6 @@ class MidiController:
             self.close_controller()
             return None
 
-    def read_input(self):
-        """
-        Poll midi device for input.
-        Convert midi note to frequency.
-        """
-        event = self.controller.read(1)[0]
-        data = event[0]
-        timestamp = event[1]
-        event_type = data[0] #key press or release
-        note_number = data[1]
-        velocity = data[2]
-        self._frequency = midi.midi_to_frequency(note_number)
-
     def update_oscillators(self):
         """
         Extract midi info from controller if active and update oscillators.

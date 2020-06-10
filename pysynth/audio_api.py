@@ -1,6 +1,7 @@
 import sounddevice as sd
 import numpy as np
 
+
 class AudioApi:
 
     def __init__(self, framerate: int, blocksize: int, channels: int):
@@ -18,7 +19,7 @@ class AudioApi:
         """
         Initialize sounddevice OutputStream.
         """        
-        stream = self.stream = sd.OutputStream(
+        stream = sd.OutputStream(
             samplerate=self.framerate,
             channels=self.channels,
             blocksize=self.blocksize,
