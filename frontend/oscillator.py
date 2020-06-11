@@ -80,6 +80,7 @@ class OscillatorGUI(ttk.LabelFrame):
         self.ui_frame = tk.Frame(self)
         self.ui_frame.pack()
         self.set_freq_frame()
+        self.amplitude_frame()
 
         # Create oscillator object on creation.
         # Defaults to sine.
@@ -88,7 +89,7 @@ class OscillatorGUI(ttk.LabelFrame):
     def set_freq_frame(self):
         self.freq_frame = tk.Frame(self.ui_frame)
         self.fixed_var = tk.BooleanVar(value=0)
-        self.freq_fixed = tk.Checkbutton(self.freq_frame, text="Fixed", variable=self.fixed_var, command=self.set_ratio_frame)
+        self.freq_fixed = tk.Checkbutton(self.freq_frame, text="Fixed", variable=self.fixed_var, command=self.toggle_freq_ratio)
         self.freq_fixed.pack()
         self.input_freq_frame = tk.Frame(self.freq_frame)
         self.freq_label = tk.Label(self.input_freq_frame, text="Freq. (Hz)")
@@ -104,8 +105,8 @@ class OscillatorGUI(ttk.LabelFrame):
         self.ratio_var = tk.DoubleVar(value=1.0)
         self.input_ratio = tk.Entry(self.ratio_frame, width=10, textvariable=self.ratio_var)
         self.input_ratio.grid(row=0, column=1, pady=10)
-        self.input_ratio.bind('<Configure>', self.set_frequency_ratio)
-        self.set_ratio_frame()
+        self.ratio_var.trace('w', self.set_frequency_ratio)
+        self.toggle_freq_ratio()
 
     def set_frequency_ratio(self, *args):
         try:
@@ -113,7 +114,7 @@ class OscillatorGUI(ttk.LabelFrame):
         except:
             pass
 
-    def set_ratio_frame(self):
+    def toggle_freq_ratio(self):
         """
         Callback method from fix frequency checkbutton.
         If frequency is fixed, entry widget is enabled and user can input frequency.
@@ -129,7 +130,17 @@ class OscillatorGUI(ttk.LabelFrame):
             if self.osc is not None: self.osc.fixed_frequency = True
             self.ratio_frame.pack_forget()
 
-    def FM_frame(self):
+    def amplitude_frame(self):
+        """
+        Generate Amplitude frame
+        """
+        self.amp_frame = tk.Frame(self.ui_frame)
+        self.amp_frame.pack()
+        self.amplitude = tk.Scale(self.amp_frame, from_=0, to=1, orient=tk.HORIZONTAL, resolution=.02, command=self.set_amplitude)
+        self.amplitude.set(0.5)
+        self.amplitude.pack(pady=10)
+
+    def freq_mod_frame(self):
         """
         Generate FM frame.
         """
@@ -166,13 +177,13 @@ class OscillatorGUI(ttk.LabelFrame):
             self.wave_icon = ImageTk.PhotoImage(bw_image)
             self.image_panel.configure(image=self.wave_icon)
             self.waveform["state"] = "disabled"
-            self.osc = self.output.oscillators[self.number] = SineWave.empty()
+            self.osc.disable()
         else:
             self.ui_frame.pack()
             self.wave_icon = ImageTk.PhotoImage(self.image)
             self.image_panel.configure(image=self.wave_icon)
             self.waveform["state"] = "normal"
-            self.osc = self.output.oscillators[self.number] = self.waveform_choice(name=self.name)
+            self.set_amplitude()
         self.output.route_and_filter()
 
     def set_frequency(self, *args):
@@ -180,3 +191,9 @@ class OscillatorGUI(ttk.LabelFrame):
         Set frequency to input value.
         """
         if self.osc: self.osc.frequency= float(self.input_freq.get())
+
+    def set_amplitude(self, *args):
+        """
+        Set amplitude to input value.
+        """
+        if self.osc: self.osc.amplitude= float(self.amplitude.get())

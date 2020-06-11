@@ -55,10 +55,10 @@ class SumFilter(Filter):
     """
     Takes multiple oscillators as input generates a single output from them.
     """
-    def __init__(self, sources: List[Oscillator], amplitude: float = 1.0):
+    def __init__(self, sources: List[Oscillator], amplitude: float = 1.0, normalise: bool = True):
         super().__init__(list(sources))
         self.amplitude = amplitude
-        self.normalise_amplitude()
+        if normalise: self.normalise_amplitude()
 
     def __str__(self):
         return f'Sum{tuple(str(s) for s in self.sources)}'

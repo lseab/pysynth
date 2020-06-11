@@ -2,6 +2,7 @@ import pygame.midi as midi
 from pygame import time
 from pygame.midi import MidiException
 from threading import Thread
+from .output import VoiceChannel
 
 
 class MidiEvent:
@@ -88,17 +89,17 @@ class MidiController:
         Extract midi info from controller if active and update oscillators.
         """
         while self.active:
-            if self.controller.poll():                
+            if self.controller.poll():
                 midi_event = MidiEvent(self.controller.read(1)[0])
                 if midi_event.event_type == "On":
                     try:
-                        self.output.stop()
-                        self.output.set_output_frequency(int(midi_event.frequency))
+                        voice = VoiceChannel(self.output, frequency=int(midi_event.frequency))
+                        self.output.add_new_voice(voice)
                         self.output.play()
                     except AttributeError:
                         pass
-                elif midi_event.event_type == "Off":
-                    self.output.stop()
+                if midi_event.event_type == "Off":
+                    self.output.remove_voice(int(midi_event.frequency))
             time.wait(10)
 
     def close_controller(self):

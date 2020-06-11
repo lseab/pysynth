@@ -1,4 +1,5 @@
 import tkinter as tk
+from pysynth.output import VoiceChannel
 
 class Keys:
 
@@ -31,12 +32,15 @@ class KeyboardGUI(tk.Frame):
 
             octave = first_octave + n // 7
             note = Keys.white_keys()[key]
+            frequency = note * (2 ** octave)
 
-            def press_key(event, note=note, octave=octave):
-                output.set_output_frequency(note * (2 ** octave))
+            def press_key(event, frequency=frequency, octave=octave):
+                voice = VoiceChannel(output, frequency=frequency)
+                output.add_new_voice(voice)
                 output.play()
 
-            def release_key(event):
+            def release_key(event, frequency=frequency):
+                output.remove_voice(frequency)
                 output.stop()
 
             x = n * white_key_width
@@ -54,12 +58,15 @@ class KeyboardGUI(tk.Frame):
 
                 octave = first_octave + n // 7
                 note = Keys.black_keys()[key]
+                frequency = note * (2 ** octave)
 
-                def press_key(event, note=note, octave=octave):
-                    output.set_output_frequency(note * (2 ** octave))
+                def press_key(event, frequency=frequency, octave=octave):
+                    voice = VoiceChannel(output, frequency=frequency)
+                    output.add_new_voice(voice)
                     output.play()
 
-                def release_key(event):
+                def release_key(event, frequency=frequency):
+                    output.remove_voice(frequency)
                     output.stop()
                 
                 x = n * white_key_width + white_key_width*0.75

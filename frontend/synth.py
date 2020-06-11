@@ -18,6 +18,7 @@ class SynthGUI(ttk.Frame):
         self.init_protocols()
         self.generate_oscillators()
         self.algorithm_frame()
+        self.voices_frame()
         self.filters_frame()
         self.keyboard_frame()
         self.input_frame()
@@ -56,6 +57,18 @@ class SynthGUI(ttk.Frame):
     def algorithm_frame(self):
         self.algo_frame = AlgorithmGUI(self)
         self.algo_frame.pack(side=tk.TOP, padx=10, pady=10)
+
+    def voices_frame(self):
+        self.vframe = tk.Frame(self)
+        self.vframe.pack(side=tk.TOP, padx=10, pady=20)
+        self.voicesLabel = tk.Label(self.vframe, text="Voices : ")
+        self.voicesLabel.grid(row=0, column=0)
+        self.input_num_voices = tk.IntVar(value=self.output.max_voices)
+        self.num_voices = ttk.OptionMenu(self.vframe, self.input_num_voices, *[i for i in range(15)], command=self.set_voices)
+        self.num_voices.grid(row=0, column=1)
+
+    def set_voices(self, *args):
+        self.output.max_voices = self.input_num_voices.get()
 
     def filters_frame(self):
         # Tremolo

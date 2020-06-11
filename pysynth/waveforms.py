@@ -23,6 +23,9 @@ class Oscillator(ABC):
 
     def __str__(self):
         return f'{self.name}'
+
+    def disable(self):
+        self.amplitude = 0.0
     
     @abstractmethod
     def blocks(self) -> Generator[List[float], None, None]:
@@ -48,10 +51,6 @@ class SineWave(Oscillator):
                 else: block.append(self.amplitude * np.sin(t * self.frequency))
                 t += increment
             yield block
-
-    @classmethod
-    def empty(cls):
-        return cls(disabled=True, name='Empty Oscillator')
 
 
 class SquareWave(Oscillator):

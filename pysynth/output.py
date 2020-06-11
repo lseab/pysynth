@@ -1,5 +1,5 @@
 from pysynth.params import blocksize, framerate
-from copy import copy
+from copy import deepcopy, copy
 from pysynth.audio_api import AudioApi
 from pysynth.filters import AmpModulationFilter, FreqModulationFilter, SumFilter, Envelope
 from pysynth.routing import Routing
@@ -47,10 +47,15 @@ class Output:
         self.audio_api = AudioApi(framerate=framerate, blocksize=blocksize, channels=1)
         self.am_modulator = None
         self.oscillators = []
-        self.filtered_output = None
+        self.max_voices = 6
+        self.voices = []
 
     def set_am_modulator(self, waveform):
         self.am_modulator = waveform
+        self.route_and_filter()
+
+    def add_oscillator(self, oscillator, index):
+        self.oscillators.insert(index, oscillator)
         self.route_and_filter()
 
     def get_next_oscillators(self, osc):
@@ -61,16 +66,59 @@ class Output:
         index = self.oscillators.index(osc)
         return self.oscillators[index + 1:]
 
-    def add_oscillator(self, oscillator, index):
-        self.oscillators.insert(index, oscillator)
+    def add_new_voice(self, voice):
+        if len(self.voices) >= self.max_voices:
+            self.voices.pop()
+        self.voices.append(voice)
+
+    def remove_voice(self, frequency):
+        for voice in self.voices:
+            if voice.frequency == frequency: self.voices.remove(voice)
+        if len(self.voices) > 0: self.play()
+        else: self.stop()
+
+    def route_and_filter(self):
+        for voice in self.voices:
+            voice.route_and_filter()
+
+    def choose_algorithm(self, algo):
+        algorithms = Algorithms(self.oscillators)
+        algo_function = algorithms.algorithm_switch().get(algo)
+        algo_function()
+        self.route_and_filter()
+
+    def get_output(self):
+        outputs = [voice.filtered_output for voice in self.voices]
+        return SumFilter(outputs)
+
+    def play(self):
+        """
+        Perform modulation, filtering and start playback.
+        """
+        self.audio_api.play(self.get_output())
+
+    def stop(self):
+        """
+        Stop audio playback
+        """
+        self.audio_api.stop()
+
+
+class VoiceChannel:
+
+    def __init__(self, output, frequency):
+        self.oscillators = deepcopy(output.oscillators)
+        self.output = output
+        self.set_frequency(frequency)
+        self.frequency = frequency
         self.route_and_filter()
 
     def tremolo(self, source):
         """
         Apply a tremolo effect.
         """
-        if self.am_modulator:
-            return AmpModulationFilter(source=source, modulator=self.am_modulator)
+        if self.output.am_modulator:
+            return AmpModulationFilter(source=source, modulator=self.output.am_modulator)
         else:
             return source
 
@@ -85,8 +133,6 @@ class Output:
             output = routing.sum_signals(carriers)
         else: output = carriers[0]
         self.filtered_output = self.apply_filters(output)
-        if self.audio_api.playing == True:
-            self.play()
 
     def apply_filters(self, signal):
         """
@@ -96,7 +142,7 @@ class Output:
         modulated_output = self.tremolo(signal)
         return modulated_output
 
-    def set_output_frequency(self, frequency):
+    def set_frequency(self, frequency):
         """
         Set frequency of (non-modulating) oscillators from external source (e.g midi controller).
         """
@@ -106,21 +152,3 @@ class Output:
             else:
                 ratio = o.frequency_ratio
                 o.frequency = frequency * ratio
-
-    def choose_algorithm(self, algo):
-        algorithms = Algorithms(self.oscillators)
-        algo_function = algorithms.algorithm_switch().get(algo)
-        algo_function()
-        self.route_and_filter()
-
-    def play(self):
-        """
-        Perform modulation, filtering and start playback.
-        """
-        self.audio_api.play(self.filtered_output)
-
-    def stop(self):
-        """
-        Stop audio playback
-        """
-        self.audio_api.stop()
