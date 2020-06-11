@@ -10,9 +10,8 @@ class Oscillator(ABC):
     Abstract class for all oscillator objects.
     Requires a List[float] generator for instantiation.
     """
-    def __init__(self, frequency, amplitude, framerate, name, disabled):
-        if disabled: frequency = amplitude = 0.0
-        self.disabled = disabled
+    def __init__(self, frequency, amplitude, framerate, name):
+        self.disabled = False
         self.frequency = frequency
         self.amplitude = amplitude
         self.framerate = framerate
@@ -26,6 +25,7 @@ class Oscillator(ABC):
 
     def disable(self):
         self.amplitude = 0.0
+        self.disabled = True
     
     @abstractmethod
     def blocks(self) -> Generator[List[float], None, None]:
@@ -37,8 +37,8 @@ class SineWave(Oscillator):
     Pure sine wave oscillator.
     Modulate flag in blocks() allows for FM modulation.
     """
-    def __init__(self, frequency: float = 0.0, amplitude: float = 1.0, framerate: int = framerate, name: str = "", disabled: bool = False):
-        super().__init__(frequency, amplitude, framerate, name, disabled)
+    def __init__(self, frequency: float = 0.0, amplitude: float = 1.0, framerate: int = framerate, name: str = ""):
+        super().__init__(frequency, amplitude, framerate, name)
 
     def blocks(self, modulate=False) -> Generator[List[float], None, None]:
         increment = 2.0 * np.pi / self.framerate
@@ -57,8 +57,8 @@ class SquareWave(Oscillator):
     """
     Pure square wave oscillator.
     """
-    def __init__(self, frequency: float = 0.0, amplitude: float = 1.0, framerate: int = framerate, name: str = "", disabled: bool = False):
-        super().__init__(frequency, amplitude, framerate, name, disabled)
+    def __init__(self, frequency: float = 0.0, amplitude: float = 1.0, framerate: int = framerate, name: str = ""):
+        super().__init__(frequency, amplitude, framerate, name)
 
     def blocks(self, modulate=False) -> Generator[List[float], None, None]:
         increment = 1.0 / self.framerate
@@ -69,3 +69,17 @@ class SquareWave(Oscillator):
                 block.append(self.amplitude if int(2*t*self.frequency) % 2 == 0 else -self.amplitude)
                 t += increment
             yield block
+
+
+class WhiteNoise(Oscillator):
+    """
+    White noise oscillator
+    """
+    def __init__(self, frequency: float = 0.0, amplitude: float = 1.0, framerate: int = framerate, name: str = ""):
+        super().__init__(frequency, amplitude, framerate, name)
+
+    def blocks(self, modulate=False) -> Generator[List[float], None, None]:
+        increment = 2.0 * np.pi / self.framerate
+        t = 0.0
+        while True:
+            yield self.amplitude * np.random.uniform(low=-self.amplitude, high=self.amplitude, size=blocksize)

@@ -1,7 +1,7 @@
 import tkinter as tk
 import string
 from tkinter import ttk
-from pysynth.waveforms import SineWave, SquareWave
+from pysynth.waveforms import SineWave, SquareWave, WhiteNoise
 from pysynth.filters import FreqModulationFilter
 from PIL import ImageTk, Image
 
@@ -67,10 +67,10 @@ class OscillatorGUI(ttk.LabelFrame):
         # Waveform choice
         self.waveforms = {
             "sine": SineWave,  
-            "square": SquareWave
+            "square": SquareWave,
             # "triangle": None,
             # "sawtooth": None,
-            # "noise": None
+            "noise": WhiteNoise
             }
         self.input_waveformtype = tk.StringVar()
         self.waveform = ttk.OptionMenu(self.wave_frame, self.input_waveformtype, 'sine', *self.waveforms.keys(), command=self.create_osc)
@@ -184,6 +184,7 @@ class OscillatorGUI(ttk.LabelFrame):
             self.image_panel.configure(image=self.wave_icon)
             self.waveform["state"] = "normal"
             self.set_amplitude()
+            self.osc.disabled = False
         self.output.route_and_filter()
 
     def set_frequency(self, *args):
