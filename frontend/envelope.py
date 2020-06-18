@@ -165,16 +165,16 @@ class EnvelopeGUI(tk.Frame):
         self.a_shape_frame.grid(row=0, column=0, padx=5)
         self.a_shape_label = tk.Label(self.a_shape_frame, text="Attack Shape")
         self.a_shape_label.pack()
-        self.a_shape = tk.Scale(self.a_shape_frame, from_=0.00001, to=1, orient=tk.HORIZONTAL, resolution=0.00001, command=self.change_a_target, showvalue=0)
-        self.a_shape.set(self.a_target)
+        self.a_shape = tk.Scale(self.a_shape_frame, from_=0, to=6, orient=tk.HORIZONTAL, resolution=0.1, command=self.change_a_target, showvalue=0)
+        self.a_shape.set(10 ** (-self.a_target))
         self.a_shape.pack()
         ## DECAY/RELEASE SHAPE
         self.dr_shape_frame = tk.Frame(self.shape_frame)
         self.dr_shape_frame.grid(row=0, column=1, padx=5)
         self.dr_shape_label = tk.Label(self.dr_shape_frame, text="Decay/Release Shape")
         self.dr_shape_label.pack()
-        self.dr_shape = tk.Scale(self.dr_shape_frame, from_=0.00001, to=1, orient=tk.HORIZONTAL, resolution=0.00001, command=self.change_decay_dr_target, showvalue=0)
-        self.dr_shape.set(self.dr_target)
+        self.dr_shape = tk.Scale(self.dr_shape_frame, from_=0, to=6, orient=tk.HORIZONTAL, resolution=0.1, command=self.change_decay_dr_target, showvalue=0)
+        self.dr_shape.set(10 ** (-self.dr_target))
         self.dr_shape.pack()
 
     def change_attack_time(self, *args):
@@ -202,13 +202,13 @@ class EnvelopeGUI(tk.Frame):
         self.replot()
 
     def change_a_target(self, *args):
-        a_target = self.a_shape.get()
+        a_target = 10 ** (-self.a_shape.get())
         self.a_target = a_target
         self.oscillator.envelope['a_target'] = a_target
         self.replot()
 
     def change_decay_dr_target(self, *args):
-        dr_target = self.dr_shape.get()
+        dr_target = 10 ** (-self.dr_shape.get())
         self.dr_target = dr_target
         self.oscillator.envelope['dr_target'] = dr_target
         self.replot()
