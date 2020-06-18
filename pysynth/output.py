@@ -74,8 +74,12 @@ class Output:
     def remove_voice(self, frequency):
         for voice in self.voices:
             if voice.frequency == frequency: self.voices.remove(voice)
-        if len(self.voices) > 0: self.play()
-        else: self.stop()
+
+    def release_notes(self, frequency):
+        for voice in self.voices:
+            if voice.frequency == frequency: 
+                voice.release_notes()
+                self.voices.remove(voice)
 
     def route_and_filter(self):
         for voice in self.voices:
@@ -107,7 +111,8 @@ class Output:
 class VoiceChannel:
 
     def __init__(self, output, frequency):
-        self.oscillators = deepcopy(output.oscillators)
+        oscillators = deepcopy(output.oscillators)
+        self.oscillators = [Envelope(o) for o in oscillators]
         self.output = output
         self.set_frequency(frequency)
         self.frequency = frequency
@@ -138,17 +143,20 @@ class VoiceChannel:
         """
         Apply filters after routing.
         """
-        # modulated_output = Envelope(self.tremolo(signal), attack=2)
         modulated_output = self.tremolo(signal)
         return modulated_output
 
     def set_frequency(self, frequency):
         """
-        Set frequency of (non-modulating) oscillators from external source (e.g midi controller).
+        Set frequency of oscillators from external source (e.g midi controller).
         """
-        filtered_oscillators = [o for o in self.oscillators if not o.disabled]
+        filtered_oscillators = [o for o in self.oscillators if not o.source.disabled]
         for o in filtered_oscillators:
-            if o.fixed_frequency: pass
+            if o.source.fixed_frequency: pass
             else:
-                ratio = o.frequency_ratio
-                o.frequency = frequency * ratio
+                ratio = o.source.frequency_ratio
+                o.source.frequency = frequency * ratio
+
+    def release_notes(self):
+        for o in self.oscillators:
+            o.state = 4

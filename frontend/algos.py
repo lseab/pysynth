@@ -5,9 +5,9 @@ from pysynth.output import Algorithms
 
 class AlgorithmGUI(tk.Frame):
 
-    def __init__(self, master):
+    def __init__(self, master, gui):
         super().__init__(master)
-        self.master = master
+        self.gui = gui
         self.algo_var = tk.StringVar(self, value='stack')
         self.algo_var.trace("w", self.change_algorithm)
         self.algo_buttons()
@@ -36,13 +36,16 @@ class AlgorithmGUI(tk.Frame):
 
     def change_algorithm(self, *args):
         if self.algo_var.get() == 'custom':
-            for o in self.master.oscillators[:-1]:
+            for o in self.gui.oscillators[:-1]:
                 if o.fm_frame is None: o.freq_mod_frame()
-            self.master.output.choose_algorithm("parallel")
+            self.gui.output.choose_algorithm("parallel")
         else:
-            for o in self.master.oscillators[:-1]:
+            for o in self.gui.oscillators[:-1]:
                 try: 
                     o.fm_frame.destroy()
                     o.fm_frame = None
                 except: pass
-            self.master.output.choose_algorithm(self.algo_var.get())
+            self.gui.output.choose_algorithm(self.algo_var.get())
+        try:
+            self.gui.change_algorithm_image()
+        except: pass

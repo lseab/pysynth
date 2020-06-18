@@ -2,7 +2,8 @@ import tkinter as tk
 import string
 from tkinter import ttk
 from pysynth.waveforms import SineWave, SquareWave, WhiteNoise
-from pysynth.filters import FreqModulationFilter
+from frontend.envelope import EnvelopeGUI
+from pysynth.filters import FreqModulationFilter, Envelope
 from PIL import ImageTk, Image
 
 
@@ -32,18 +33,20 @@ class FmButton(tk.Frame):
         self.gui.output.route_and_filter()
 
 
-class OscillatorGUI(ttk.LabelFrame):
+class OscillatorGUI(tk.Frame):
     """
     GUI unit for an oscillator panel.
     """
-    def __init__(self, master_frame, output, number):
-        super().__init__(master_frame)
+    def __init__(self, master_frame, gui, output, number):
+        super().__init__(master_frame, relief=tk.RAISED, borderwidth=2)
+        self.gui = gui
         self.number = number
         self.name = f'Oscillator {string.ascii_uppercase[number]}'
         self.output = output
         self.osc = None        
         self.fm_frame = None
         self.UI()
+        self.bind("<Button-1>", self.show_envelope)
 
     def UI(self):
         """
@@ -57,7 +60,7 @@ class OscillatorGUI(ttk.LabelFrame):
             ]
             
         self.wave_frame = tk.Frame(self)
-        self.wave_frame.pack(padx=10, pady=10)        
+        self.wave_frame.pack(padx=10, pady=10)
         self.image = Image.open(self.images[self.number]).convert('RGBA').resize((20,20))        
         self.wave_icon = ImageTk.PhotoImage(self.image)
         self.image_panel = tk.Label(self.wave_frame, image=self.wave_icon)
@@ -88,6 +91,7 @@ class OscillatorGUI(ttk.LabelFrame):
 
     def set_freq_frame(self):
         self.freq_frame = tk.Frame(self.ui_frame)
+        self.freq_frame.bind("<Button-1>", self.show_envelope)
         self.fixed_var = tk.BooleanVar(value=0)
         self.freq_fixed = tk.Checkbutton(self.freq_frame, text="Fixed", variable=self.fixed_var, command=self.toggle_freq_ratio)
         self.freq_fixed.pack()
@@ -135,8 +139,9 @@ class OscillatorGUI(ttk.LabelFrame):
         Generate Amplitude frame
         """
         self.amp_frame = tk.Frame(self.ui_frame)
+        self.amp_frame.bind("<Button-1>", self.show_envelope)
         self.amp_frame.pack()
-        self.amplitude = tk.Scale(self.amp_frame, from_=0, to=1, orient=tk.HORIZONTAL, resolution=.02, command=self.set_amplitude)
+        self.amplitude = tk.Scale(self.amp_frame, from_=0, to=1, orient=tk.HORIZONTAL, resolution=.02, command=self.set_amplitude, relief=tk.RIDGE)
         self.amplitude.set(0.5)
         self.amplitude.pack(pady=10)
 
@@ -158,6 +163,11 @@ class OscillatorGUI(ttk.LabelFrame):
             self.fm_button = FmButton(self.op_frame, self, oscillator)
             self.fm_button.pack()
 
+    def show_envelope(self, *args):
+        for o in self.gui.oscillators: o['bg'] = 'SystemButtonFace'
+        self['bg'] = 'SkyBlue1'
+        self.gui.show_envelope(self.osc, self.number)
+
     def create_osc(self, *args):
         """
         Instantiate oscillator after waveform type selection.
@@ -168,6 +178,7 @@ class OscillatorGUI(ttk.LabelFrame):
         self.osc = self.waveform_choice(name=self.name)
         self.output.add_oscillator(self.osc, index=self.number)
         self.set_frequency()
+        self.set_amplitude()
         self.freq_frame.pack()
 
     def disable_osc(self, *args):

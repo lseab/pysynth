@@ -2,6 +2,7 @@ import numpy as np
 from abc import ABC
 from pysynth.waveforms import Oscillator
 from typing import List
+from pysynth.params import blocksize
 
 
 class Filter(ABC):
@@ -19,13 +20,15 @@ class AmpModulationFilter(Filter):
     """
     def __init__(self, source: Oscillator, modulator: Oscillator):
         super().__init__([source])
-        self.source = source.blocks()
-        self.modulator = modulator.blocks()
+        self.source = source
+        self.modulator = modulator
 
     def blocks(self):
+        source = self.source.blocks()
+        modulator = self.modulator.blocks(single_samples=False)
         while True:
-            am_envelope = [(1.0 + i) for i in next(self.modulator)]
-            yield [e * s for (e, s) in zip(am_envelope, next(self.source))]
+            am_envelope = [(1.0 + i) for i in next(modulator)]
+            yield [e * s for (e, s) in zip(am_envelope, next(source))]
 
 
 class FreqModulationFilter(Filter):
@@ -38,7 +41,6 @@ class FreqModulationFilter(Filter):
         self.source_blocks = source.blocks(modulate=True)
         self.modulator = modulator
         self.mod_blocks = modulator.blocks()
-        self.amplitude = self.source.amplitude
 
     def __str__(self):
         return f'FreqMod({self.source}, {self.modulator})'
@@ -49,7 +51,8 @@ class FreqModulationFilter(Filter):
             if modulate:
                 yield modulation               
             else:
-                yield self.amplitude * np.cos(modulation)
+                yield self.source.amplitude * np.cos(modulation)
+
 
 class SumFilter(Filter):
     """
@@ -69,19 +72,84 @@ class SumFilter(Filter):
     def blocks(self):
         sources = [src.blocks() for src in self.sources]
         source_blocks = zip(*sources)
+        amplitude = self.amplitude
         while True:            
             blocks = next(source_blocks)
-            yield [self.amplitude * sum(v) for v in zip(*blocks)]
+            yield [amplitude * sum(v) for v in zip(*blocks)]
 
 
 class Envelope(Filter):
-    def __init__(self, source: Oscillator, attack: float):
+    def __init__(self, source: Oscillator):
         super().__init__([source])
-        self.source = source.blocks()
-        self.attack = attack
+        self.source = source
+        self.state = 1
+        self.max_amp = source.amplitude  
+        self.attack = source.envelope['attack']
+        self.decay = source.envelope['decay']
+        self.sustain_level = source.envelope['sustain'] * self.max_amp
+        self.release = source.envelope['release']
+        self.a_target = source.envelope['a_target']
+        self.dr_target = source.envelope['dr_target']
 
-    def blocks(self):
-        amplitude = 0.0
+    def get_coefficient(self, target, rate, base):
+        return (1.0 / (rate * self.framerate)) * np.log(target / base)
+
+    def blocks(self, modulate=False):
+        self.amplitude = 0.0
+        max_amp = self.max_amp
+        sustain_level = self.sustain_level
+        source_blocks = self.source.blocks(modulate=modulate)
+
+        if self.attack != 0.0:
+            attack_multiplier = np.exp(self.get_coefficient(target=self.a_target, rate=self.attack, base=(max_amp + self.a_target)))
+            attack_base = (max_amp + self.a_target) * (1 - attack_multiplier)
+        if self.decay != 0.0:
+            decay_multiplier = np.exp(self.get_coefficient(target=self.dr_target, rate=self.decay, base=(max_amp - sustain_level + self.dr_target)))
+            decay_base = (sustain_level - self.dr_target) * (1 - decay_multiplier)
+        if self.release != 0.0:
+            release_multiplier = np.exp(self.get_coefficient(target=self.dr_target, rate=self.release, base=(sustain_level + self.dr_target)))
+            release_base = - self.dr_target * (1 - release_multiplier)
+
         while True:
-            amplitude += 2048 / (self.attack * self.framerate)
-            yield [source * amplitude for source in next(self.source)]
+            if self.state == 1:
+                if self.attack == 0.0:
+                    self.amplitude = max_amp
+                    self.state = 2
+                else:
+                    block = []
+                    for _ in range(blocksize):
+                        block.append(self.amplitude * next(source_blocks))
+                        self.amplitude = attack_base + self.amplitude * attack_multiplier
+                    yield block
+                    if self.amplitude >= max_amp: self.state = 2
+                
+            if self.state == 2:
+                if self.decay == 0.0:
+                    self.amplitude = max_amp
+                    self.state = 3
+                else:
+                    block = []
+                    for _ in range(blocksize):
+                        block.append(self.amplitude * next(source_blocks))
+                        self.amplitude = decay_base + self.amplitude * decay_multiplier
+                    yield block
+                    if self.amplitude <= sustain_level: self.state = 3
+
+            if self.state == 3:
+                block = []
+                for _ in range(blocksize):
+                    block.append(self.amplitude * (next(source_blocks)))
+                yield block
+
+            if self.state == 4:
+                if self.release == 0.0:
+                    self.amplitude = 0.0
+                    yield [0.0 for _ in range(blocksize)]
+                elif self.amplitude > 0:
+                    block = []
+                    for _ in range(blocksize):
+                        block.append(self.amplitude * next(source_blocks))
+                        self.amplitude = release_base + self.amplitude * release_multiplier
+                    yield block
+                else:
+                    yield [0.0 for _ in range(blocksize)]

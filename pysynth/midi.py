@@ -99,7 +99,7 @@ class MidiController:
                     except AttributeError:
                         pass
                 if midi_event.event_type == "Off":
-                    self.output.remove_voice(int(midi_event.frequency))
+                    self.output.release_notes(int(midi_event.frequency))
             time.wait(10)
 
     def close_controller(self):

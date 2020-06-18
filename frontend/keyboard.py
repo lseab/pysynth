@@ -40,8 +40,7 @@ class KeyboardGUI(tk.Frame):
                 output.play()
 
             def release_key(event, frequency=frequency):
-                output.remove_voice(frequency)
-                output.stop()
+                output.release_notes(frequency)
 
             x = n * white_key_width
             key_rect = canvas.create_rectangle(x+x_offset, y_offset,
@@ -66,8 +65,7 @@ class KeyboardGUI(tk.Frame):
                     output.play()
 
                 def release_key(event, frequency=frequency):
-                    output.remove_voice(frequency)
-                    output.stop()
+                    output.release_notes(frequency)
                 
                 x = n * white_key_width + white_key_width*0.75
                 key_rect = canvas.create_rectangle(x+x_offset, y_offset,

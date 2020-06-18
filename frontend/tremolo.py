@@ -2,10 +2,10 @@ import tkinter as tk
 from tkinter import ttk
 from pysynth.waveforms import SineWave, SquareWave
 
-class TremoloGUI(ttk.LabelFrame):
+class TremoloGUI(tk.LabelFrame):
 
-    def __init__(self, master, output, title):
-        super().__init__(master, text=title)
+    def __init__(self, master, output, title, **kwargs):
+        super().__init__(master, text=title, **kwargs)
         self.output = output
         self.UI()
 
