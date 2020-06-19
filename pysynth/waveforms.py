@@ -68,7 +68,6 @@ class SineWave(Oscillator):
                 yield block
 
 
-
 class SquareWave(Oscillator):
     """
     Pure square wave oscillator.

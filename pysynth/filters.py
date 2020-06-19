@@ -35,7 +35,7 @@ class FreqModulationFilter(Filter):
     """
     Frequncy modulater. Takes a source oscillator and a modulating oscillator as inputs and generates a modulated signal.
     """
-    def __init__(self, source: Oscillator, modulator: Oscillator, amplitude: float = 1.0):
+    def __init__(self, source: Oscillator, modulator: Oscillator):
         super().__init__([source])
         self.source = source
         self.source_blocks = source.blocks(modulate=True)
@@ -67,7 +67,7 @@ class SumFilter(Filter):
         return f'Sum{tuple(str(s) for s in self.sources)}'
 
     def normalise_amplitude(self):
-        self.amplitude /= len(self.sources)        
+        self.amplitude /= len(self.sources)
 
     def blocks(self):
         sources = [src.blocks() for src in self.sources]
@@ -90,6 +90,9 @@ class Envelope(Filter):
         self.release = source.envelope['release']
         self.a_target = source.envelope['a_target']
         self.dr_target = source.envelope['dr_target']
+
+    def __str__(self):
+        return str(self.source)
 
     def get_coefficient(self, target, rate, base):
         return (1.0 / (rate * self.framerate)) * np.log(target / base)
@@ -137,6 +140,7 @@ class Envelope(Filter):
 
             if self.state == 3:
                 block = []
+                self.amplitude = sustain_level
                 for _ in range(blocksize):
                     block.append(self.amplitude * (next(source_blocks)))
                 yield block
