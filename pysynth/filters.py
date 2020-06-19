@@ -51,7 +51,7 @@ class FreqModulationFilter(Filter):
             if modulate:
                 yield modulation               
             else:
-                yield self.source.amplitude * np.cos(modulation)
+                yield [a * b for (a, b) in zip(self.source.amps, np.cos(modulation))] 
 
 
 class SumFilter(Filter):
@@ -82,6 +82,7 @@ class Envelope(Filter):
     def __init__(self, source: Oscillator):
         super().__init__([source])
         self.source = source
+        self.amps = [0.0 for _ in range(blocksize)]
         self.state = 1
         self.max_amp = source.amplitude  
         self.attack = source.envelope['attack']
@@ -98,7 +99,7 @@ class Envelope(Filter):
         return (1.0 / (rate * self.framerate)) * np.log(target / base)
 
     def blocks(self, modulate=False):
-        self.amplitude = 0.0
+        amplitude = 0.0
         max_amp = self.max_amp
         sustain_level = self.sustain_level
         source_blocks = self.source.blocks(modulate=modulate)
@@ -116,44 +117,56 @@ class Envelope(Filter):
         while True:
             if self.state == 1:
                 if self.attack == 0.0:
-                    self.amplitude = max_amp
+                    amplitude = max_amp
                     self.state = 2
                 else:
                     block = []
+                    self.amps = []
                     for _ in range(blocksize):
-                        block.append(self.amplitude * next(source_blocks))
-                        self.amplitude = attack_base + self.amplitude * attack_multiplier
-                    yield block
-                    if self.amplitude >= max_amp: self.state = 2
+                        block.append(next(source_blocks))
+                        self.amps.append(amplitude)
+                        amplitude = attack_base + amplitude * attack_multiplier      
+                    if modulate: yield block
+                    else: yield [a * b for (a, b) in zip(self.amps, block)]
+                    if amplitude >= max_amp: self.state = 2
                 
             if self.state == 2:
                 if self.decay == 0.0:
-                    self.amplitude = max_amp
+                    amplitude = max_amp
                     self.state = 3
                 else:
                     block = []
+                    self.amps = []
                     for _ in range(blocksize):
-                        block.append(self.amplitude * next(source_blocks))
-                        self.amplitude = decay_base + self.amplitude * decay_multiplier
-                    yield block
-                    if self.amplitude <= sustain_level: self.state = 3
+                        block.append(next(source_blocks))
+                        self.amps.append(amplitude)
+                        amplitude = decay_base + amplitude * decay_multiplier      
+                    if modulate: yield block
+                    else: yield [a * b for (a, b) in zip(self.amps, block)]
+                    if amplitude <= sustain_level: self.state = 3
 
             if self.state == 3:
                 block = []
-                self.amplitude = sustain_level
+                self.amps = []
+                amplitude = sustain_level
                 for _ in range(blocksize):
-                    block.append(self.amplitude * (next(source_blocks)))
-                yield block
+                    block.append(next(source_blocks))
+                    self.amps.append(sustain_level)      
+                if modulate: yield block
+                else: yield [a * b for (a, b) in zip(self.amps, block)]
 
             if self.state == 4:
                 if self.release == 0.0:
-                    self.amplitude = 0.0
+                    amplitude = 0.0
                     yield [0.0 for _ in range(blocksize)]
-                elif self.amplitude > 0:
+                elif amplitude > 0:
                     block = []
+                    self.amps = []
                     for _ in range(blocksize):
-                        block.append(self.amplitude * next(source_blocks))
-                        self.amplitude = release_base + self.amplitude * release_multiplier
-                    yield block
+                        block.append(next(source_blocks))
+                        self.amps.append(amplitude)
+                        amplitude = release_base + amplitude * release_multiplier      
+                    if modulate: yield block
+                    else: yield [a * b for (a, b) in zip(self.amps, block)]
                 else:
                     yield [0.0 for _ in range(blocksize)]

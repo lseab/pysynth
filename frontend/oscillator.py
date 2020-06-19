@@ -141,8 +141,8 @@ class OscillatorGUI(tk.Frame):
         self.amp_frame = tk.Frame(self.ui_frame)
         self.amp_frame.bind("<Button-1>", self.show_envelope)
         self.amp_frame.pack()
-        self.amplitude = tk.Scale(self.amp_frame, from_=0, to=1, orient=tk.HORIZONTAL, resolution=.02, command=self.set_amplitude, relief=tk.RIDGE)
-        self.amplitude.set(0.5)
+        self.amplitude = tk.Scale(self.amp_frame, from_=0, to=5, orient=tk.HORIZONTAL, resolution=.02, command=self.set_amplitude, relief=tk.RIDGE)
+        self.amplitude.set(1.0)
         self.amplitude.pack(pady=10)
 
     def freq_mod_frame(self):

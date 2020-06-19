@@ -48,7 +48,7 @@ class SineWave(Oscillator):
     def __init__(self, frequency: float = 0.0, amplitude: float = 1.0, framerate: int = framerate, name: str = ""):
         super().__init__(frequency, amplitude, framerate, name)
 
-    def blocks(self, single_samples=True, modulate=False) -> Generator[List[float], None, None]:
+    def blocks(self, modulate=False, single_samples=True) -> Generator[List[float], None, None]:
         increment = 2.0 * np.pi / self.framerate
         t = 0.0
         frequency = self.frequency
@@ -56,14 +56,14 @@ class SineWave(Oscillator):
             if single_samples:
                 if modulate:
                     yield t * frequency
-                else: yield 0.5 * np.sin(t * frequency)
+                else: yield np.sin(t * frequency)
                 t += increment
             else:
                 block = []
                 for _ in range(blocksize):                
                     if modulate:
-                        block.append(t * self.frequency)
-                    else: block.append(self.amplitude * np.sin(t * self.frequency))
+                        block.append(t * frequency)
+                    else: block.append(self.amplitude * np.sin(t * frequency))
                     t += increment
                 yield block
 
