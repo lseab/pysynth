@@ -100,7 +100,7 @@ class MidiController:
                         pass
                 if midi_event.event_type == "Off":
                     self.output.release_notes(int(midi_event.frequency))
-            time.wait(10)
+            time.wait(20)
 
     def close_controller(self):
         """

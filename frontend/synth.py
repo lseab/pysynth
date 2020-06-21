@@ -13,10 +13,10 @@ from .algos import AlgorithmGUI
 from .envelope import EnvelopeGUI
 
 
-class SynthGUI(ttk.Frame):
+class SynthGUI(tk.Tk):
 
-    def __init__(self, master=None):
-        super().__init__(master)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.first = True
         self.output = Output()
         self.init_protocols()
@@ -29,13 +29,13 @@ class SynthGUI(ttk.Frame):
         self.filters_frame()
         self.keyboard_frame()
         self.input_frame()
-        self.pack()
+        self.status_bar()
 
     def init_protocols(self):
         """
         Call self.on_closing when the gui window is closed.
         """
-        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def on_closing(self):
         """
@@ -44,7 +44,7 @@ class SynthGUI(ttk.Frame):
         if messagebox.askokcancel("Quit", "Are you sure you want to quit?"):
             self.controller.close_controller()
             MidiController.exit()
-            self.master.destroy()
+            self.destroy()
 
     def main_frames(self):
         self.top_frame = tk.Frame(self)
@@ -178,4 +178,15 @@ class SynthGUI(ttk.Frame):
         """
         selection = self.input_device.get()
         device_id = self.controller.get_input_devices()[selection]
-        self.controller.set_input_device(device_id)
+        
+        try:
+            self.controller.set_input_device(device_id)
+            self.statusbar['text'] = f'Selected input device: {selection}'
+        except Exception as e:
+            self.controller.active = False
+            if 'Host error' in str(e):
+                self.statusbar['text'] = f'Midi device {selection} is busy...'
+
+    def status_bar(self):
+        self.statusbar = ttk.Label(self, text='Welcome to PySynth', relief=tk.SUNKEN, font='Times 10 italic')
+        self.statusbar.pack(side=tk.BOTTOM, fill=tk.X)
