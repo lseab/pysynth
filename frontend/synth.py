@@ -7,7 +7,7 @@ from pysynth.filters import Envelope
 from pysynth.waveforms import SineWave
 from pysynth.midi import MidiController
 from .oscillator import OscillatorGUI
-from .tremolo import TremoloGUI
+from .filters import TremoloGUI, PassFilterGUI
 from .keyboard import KeyboardGUI
 from .algos import AlgorithmGUI
 from .envelope import EnvelopeGUI
@@ -129,19 +129,15 @@ class SynthGUI(ttk.Frame):
         self.output.max_voices = self.input_num_voices.get()
 
     def filters_frame(self):
-        self.filters_frame_left = tk.Frame(self.middle_frame, relief=tk.RAISED, borderwidth=2)
+        self.filters_frame_left = tk.Frame(self.middle_frame)
         self.filters_frame_left.grid(row=0, column=0, padx=20, pady=10)
-        self.filters_frame_right = tk.Frame(self.middle_frame, relief=tk.RAISED, borderwidth=2)
+        self.filters_frame_right = tk.Frame(self.middle_frame)
         self.filters_frame_right.grid(row=0, column=2, padx=20, pady=10)
         # Tremolo
-        self.trem_gui_left1 = TremoloGUI(self.filters_frame_left, output=self.output, title=f'Tremolo (AM modulation)')
-        self.trem_gui_left1.pack(padx=10, pady=10)
-        self.trem_gui_right1 = TremoloGUI(self.filters_frame_right, output=self.output, title=f'Tremolo (AM modulation)')
-        self.trem_gui_right1.pack(padx=10, pady=10)
-        self.trem_gui_left2 = TremoloGUI(self.filters_frame_left, output=self.output, title=f'Tremolo (AM modulation)')
-        self.trem_gui_left2.pack(padx=10, pady=10)
-        self.trem_gui_right2 = TremoloGUI(self.filters_frame_right, output=self.output, title=f'Tremolo (AM modulation)')
-        self.trem_gui_right2.pack(padx=10, pady=10)
+        self.trem_gui = TremoloGUI(self.filters_frame_left, output=self.output, width=200, height=160, relief=tk.RAISED, borderwidth=2)
+        self.trem_gui.pack(padx=10, pady=10)
+        self.pass_filter_gui = PassFilterGUI(self.filters_frame_right, output=self.output, width=200, height=160, relief=tk.RAISED, borderwidth=2)
+        self.pass_filter_gui.pack(padx=10, pady=10)
 
     def keyboard_frame(self):
         self.key_frame = tk.Frame(self.bottom_frame)        

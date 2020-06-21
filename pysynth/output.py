@@ -1,7 +1,7 @@
 from pysynth.params import blocksize, framerate
 from copy import deepcopy, copy
 from pysynth.audio_api import AudioApi
-from pysynth.filters import AmpModulationFilter, FreqModulationFilter, SumFilter, Envelope
+from pysynth.filters import AmpModulationFilter, FreqModulationFilter, SumFilter, Envelope, PassFilter
 from pysynth.routing import Routing
 
 
@@ -46,13 +46,11 @@ class Output:
     def __init__(self):
         self.audio_api = AudioApi(framerate=framerate, blocksize=blocksize, channels=1)
         self.am_modulator = None
+        self.filter_type = "lowpass"
+        self.filter_cutoff = 18000
         self.oscillators = []
         self.max_voices = 6
         self.voices = []
-
-    def set_am_modulator(self, waveform):
-        self.am_modulator = waveform
-        self.route_and_filter()
 
     def add_oscillator(self, oscillator, index):
         self.oscillators.insert(index, oscillator)
@@ -81,9 +79,34 @@ class Output:
                 voice.release_notes()
                 self.voices.remove(voice)
 
+    def set_am_modulator(self, waveform):
+        self.am_modulator = waveform
+        self.route_and_filter()
+
+    def tremolo(self, source):
+        """
+        Apply a tremolo effect.
+        """
+        if self.am_modulator:
+            return AmpModulationFilter(source=source, modulator=self.am_modulator)
+        else:
+            return source
+
+    def pass_filter(self, source):
+        if self.filter_type == "lowpass": return PassFilter.lowpass(source, self.filter_cutoff)
+        elif self.filter_type == "highpass": return PassFilter.highpass(source, self.filter_cutoff)
+
     def route_and_filter(self):
         for voice in self.voices:
             voice.route_and_filter()
+
+    def apply_final_filters(self, signal):
+        """
+        Apply filters after routing.
+        """
+        final_output = self.tremolo(signal)
+        final_output = self.pass_filter(final_output)
+        return final_output
 
     def choose_algorithm(self, algo):
         algorithms = Algorithms(self.oscillators)
@@ -99,7 +122,9 @@ class Output:
         """
         Perform modulation, filtering and start playback.
         """
-        self.audio_api.play(self.get_output())
+        output = self.get_output()
+        final_output = self.apply_final_filters(output)
+        self.audio_api.play(final_output)
 
     def stop(self):
         """
@@ -113,19 +138,9 @@ class VoiceChannel:
     def __init__(self, output, frequency):
         oscillators = deepcopy(output.oscillators)
         self.oscillators = [Envelope(o) for o in oscillators]
-        self.output = output
         self.set_frequency(frequency)
         self.frequency = frequency
         self.route_and_filter()
-
-    def tremolo(self, source):
-        """
-        Apply a tremolo effect.
-        """
-        if self.output.am_modulator:
-            return AmpModulationFilter(source=source, modulator=self.output.am_modulator)
-        else:
-            return source
 
     def route_and_filter(self):
         """
@@ -135,16 +150,8 @@ class VoiceChannel:
         routing = Routing(self.oscillators)
         carriers = routing.get_final_output()
         if len(carriers) > 1: 
-            output = routing.sum_signals(carriers)
-        else: output = carriers[0]
-        self.filtered_output = self.apply_filters(output)
-
-    def apply_filters(self, signal):
-        """
-        Apply filters after routing.
-        """
-        modulated_output = self.tremolo(signal)
-        return modulated_output
+            self.filtered_output = routing.sum_signals(carriers)
+        else: self.filtered_output = carriers[0]
 
     def set_frequency(self, frequency):
         """

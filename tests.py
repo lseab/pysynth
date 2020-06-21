@@ -31,7 +31,7 @@ def midi_controller():
 
 def low_pass_filter(duration):
     source = Envelope(SineWave(440))
-    filtered_sound = FreqFilter.highpass(source, 800)
+    filtered_sound = PassFilter.highpass(source, 800)
     audio_interface.play(filtered_sound)
     time.sleep(duration)
 

@@ -79,7 +79,7 @@ class SumFilter(Filter):
             yield [amplitude * sum(v) for v in zip(*blocks)]
 
 
-class FreqFilter(Filter):
+class PassFilter(Filter):
     def __init__(self, source: Oscillator, cutoff: float, filter_type: str):
         super().__init__([source])
         self.source = source
