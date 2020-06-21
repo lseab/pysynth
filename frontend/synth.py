@@ -106,10 +106,12 @@ class SynthGUI(ttk.Frame):
 
     def show_algorithms(self, *args):
         self.env_gui.pack_forget()
+        self.pass_filter_gui.plot_frame.pack_forget()
         self.config_frame.pack(side=tk.TOP, padx=10, pady=10)
 
     def show_envelope(self, oscillator, number):
         self.config_frame.pack_forget()
+        self.pass_filter_gui.plot_frame.pack_forget()
         self.env_gui.pack()
         self.env_gui.update_envelope(oscillator, number)
 
@@ -134,13 +136,21 @@ class SynthGUI(ttk.Frame):
         self.filters_frame_right = tk.Frame(self.middle_frame)
         self.filters_frame_right.grid(row=0, column=2, padx=20, pady=10)
         # Tremolo
-        self.trem_gui = TremoloGUI(self.filters_frame_left, output=self.output, width=200, height=160, relief=tk.RAISED, borderwidth=2)
+        self.trem_gui = TremoloGUI(self.filters_frame_left, output=self.output, 
+                                                width=200, height=160, relief=tk.RAISED, borderwidth=2)
         self.trem_gui.pack(padx=10, pady=10)
-        self.pass_filter_gui = PassFilterGUI(self.filters_frame_right, output=self.output, width=200, height=160, relief=tk.RAISED, borderwidth=2)
+        self.pass_filter_gui = PassFilterGUI(self.filters_frame_right, output=self.output, display_frame=self.display_frame,
+                                                width=200, height=160, relief=tk.RAISED, borderwidth=2)
         self.pass_filter_gui.pack(padx=10, pady=10)
+        self.pass_filter_gui.bind("<Button-1>", self.pass_filter_frame)
+        
+    def pass_filter_frame(self, *args):
+        self.env_gui.pack_forget()
+        self.config_frame.pack_forget()
+        self.pass_filter_gui.plot_frame.pack(padx=10, pady=10, expand=True)
 
     def keyboard_frame(self):
-        self.key_frame = tk.Frame(self.bottom_frame)        
+        self.key_frame = tk.Frame(self.bottom_frame)
         self.key_frame.pack(side=tk.TOP, padx=10, pady=10)
         self.keyboard = KeyboardGUI(self.key_frame, self.output)
         self.keyboard.pack()

@@ -2,7 +2,7 @@ import numpy as np
 from abc import ABC
 from pysynth.waveforms import Oscillator
 from typing import List
-from pysynth.params import blocksize
+from pysynth.params import blocksize, framerate
 from scipy.signal import butter, lfilter, freqz, lfilter_zi
 
 
@@ -86,18 +86,23 @@ class PassFilter(Filter):
         self.cutoff = cutoff
         self.filter_type = filter_type
 
-    def butterworth(self, order, cutoff, filter_type):
-        b, a = butter(order, cutoff, fs=self.framerate, btype=filter_type, analog=False)
-        return b, a
+    @staticmethod
+    def butterworth(cutoff, filter_type, order=3):
+        return butter(order, cutoff, fs=framerate, btype=filter_type, analog=False)
+
+    @staticmethod
+    def frequency_response(cutoff, filter_type, order=3):
+        b, a = PassFilter.butterworth(cutoff, filter_type, order)
+        return freqz(b, a, fs=framerate, worN=100)
 
     def butterworth_filter(self, data, cutoff, filter_type, zi, order=3):
-        b, a = self.butterworth(order, cutoff, filter_type)
+        b, a = PassFilter.butterworth(cutoff, filter_type, order)
         y, zf = lfilter(b, a, data, axis=0, zi=zi)
         return y, zf
 
     def blocks(self):
         source = self.source.blocks()
-        zi = lfilter_zi(*self.butterworth(3, self.cutoff, self.filter_type))
+        zi = lfilter_zi(*PassFilter.butterworth(self.cutoff, self.filter_type))
         while True:
             filtered_data, zi = self.butterworth_filter(next(source), self.cutoff, self.filter_type, zi)
             yield filtered_data
