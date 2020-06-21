@@ -3,6 +3,7 @@ from abc import ABC
 from pysynth.waveforms import Oscillator
 from typing import List
 from pysynth.params import blocksize
+from scipy.signal import butter, lfilter, freqz, lfilter_zi
 
 
 class Filter(ABC):
@@ -10,7 +11,7 @@ class Filter(ABC):
     Abstract class for all filter objects.
     """
     def __init__(self, sources: List[Oscillator]):
-        self.sources = sources        
+        self.sources = sources
         self.framerate = sources[0].framerate if sources else 0
 
 
@@ -49,9 +50,9 @@ class FreqModulationFilter(Filter):
         while True:
             modulation = [s + m for (s, m) in zip(next(self.source_blocks), next(self.mod_blocks))]
             if modulate:
-                yield modulation               
+                yield modulation
             else:
-                yield [a * b for (a, b) in zip(self.source.amps, np.cos(modulation))] 
+                yield [a * b for (a, b) in zip(self.source.amps, np.cos(modulation))]
 
 
 class SumFilter(Filter):
@@ -73,9 +74,41 @@ class SumFilter(Filter):
         sources = [src.blocks() for src in self.sources]
         source_blocks = zip(*sources)
         amplitude = self.amplitude
-        while True:            
+        while True:
             blocks = next(source_blocks)
             yield [amplitude * sum(v) for v in zip(*blocks)]
+
+
+class FreqFilter(Filter):
+    def __init__(self, source: Oscillator, cutoff: float, filter_type: str):
+        super().__init__([source])
+        self.source = source
+        self.cutoff = cutoff
+        self.filter_type = filter_type
+
+    def butterworth(self, order, cutoff, filter_type):
+        b, a = butter(order, cutoff, fs=self.framerate, btype=filter_type, analog=False)
+        return b, a
+
+    def butterworth_filter(self, data, cutoff, filter_type, zi, order=3):
+        b, a = self.butterworth(order, cutoff, filter_type)
+        y, zf = lfilter(b, a, data, axis=0, zi=zi)
+        return y, zf
+
+    def blocks(self):
+        source = self.source.blocks()
+        zi = lfilter_zi(*self.butterworth(3, self.cutoff, self.filter_type))
+        while True:
+            filtered_data, zi = self.butterworth_filter(next(source), self.cutoff, self.filter_type, zi)
+            yield filtered_data
+
+    @classmethod
+    def lowpass(cls, *args):
+        return cls(*args, filter_type="low")
+
+    @classmethod
+    def highpass(cls, *args):
+        return cls(*args, filter_type="high")
 
 
 class Envelope(Filter):
@@ -84,7 +117,7 @@ class Envelope(Filter):
         self.source = source
         self.amps = [0.0 for _ in range(blocksize)]
         self.state = 1
-        self.max_amp = source.amplitude  
+        self.max_amp = source.amplitude
         self.attack = source.envelope['attack']
         self.decay = source.envelope['decay']
         self.sustain_level = source.envelope['sustain'] * self.max_amp
@@ -125,11 +158,11 @@ class Envelope(Filter):
                     for _ in range(blocksize):
                         block.append(next(source_blocks))
                         self.amps.append(amplitude)
-                        amplitude = attack_base + amplitude * attack_multiplier      
+                        amplitude = attack_base + amplitude * attack_multiplier
                     if modulate: yield block
                     else: yield [a * b for (a, b) in zip(self.amps, block)]
                     if amplitude >= max_amp: self.state = 2
-                
+
             if self.state == 2:
                 if self.decay == 0.0:
                     amplitude = max_amp
@@ -140,7 +173,7 @@ class Envelope(Filter):
                     for _ in range(blocksize):
                         block.append(next(source_blocks))
                         self.amps.append(amplitude)
-                        amplitude = decay_base + amplitude * decay_multiplier      
+                        amplitude = decay_base + amplitude * decay_multiplier
                     if modulate: yield block
                     else: yield [a * b for (a, b) in zip(self.amps, block)]
                     if amplitude <= sustain_level: self.state = 3
@@ -151,7 +184,7 @@ class Envelope(Filter):
                 amplitude = sustain_level
                 for _ in range(blocksize):
                     block.append(next(source_blocks))
-                    self.amps.append(sustain_level)      
+                    self.amps.append(sustain_level)
                 if modulate: yield block
                 else: yield [a * b for (a, b) in zip(self.amps, block)]
 
@@ -165,7 +198,7 @@ class Envelope(Filter):
                     for _ in range(blocksize):
                         block.append(next(source_blocks))
                         self.amps.append(amplitude)
-                        amplitude = release_base + amplitude * release_multiplier      
+                        amplitude = release_base + amplitude * release_multiplier
                     if modulate: yield block
                     else: yield [a * b for (a, b) in zip(self.amps, block)]
                 else:

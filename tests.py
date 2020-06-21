@@ -1,4 +1,4 @@
-from pysynth import params
+from pysynth.params import framerate, blocksize
 import time
 from pysynth.midi import MidiController
 from pysynth.audio_api import AudioApi
@@ -27,8 +27,16 @@ def midi_controller():
     cont = MidiController()
     print(cont.input_devices)
 
+### Filters
+
+def low_pass_filter(duration):
+    source = Envelope(SineWave(440))
+    filtered_sound = FreqFilter.highpass(source, 800)
+    audio_interface.play(filtered_sound)
+    time.sleep(duration)
+
 
 if __name__ == '__main__':
-    global audio_interface 
-    audio_interface = AudioApi(framerate=params.framerate, blocksize=params.blocksize, channels=1)
-    FM_mod_test(2.0)
+    global audio_interface
+    audio_interface = AudioApi(framerate=framerate, blocksize=blocksize, channels=1)
+    low_pass_filter(2.0)
