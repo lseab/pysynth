@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Generator, Optional, List
 import numpy as np
+import random
 import sounddevice as sd
 from pysynth.params import blocksize, framerate
 
@@ -75,15 +76,19 @@ class SquareWave(Oscillator):
     def __init__(self, frequency: float = 0.0, amplitude: float = 1.0, framerate: int = framerate, name: str = ""):
         super().__init__(frequency, amplitude, framerate, name)
 
-    def blocks(self, modulate=False) -> Generator[List[float], None, None]:
+    def blocks(self, modulate=False, single_samples=True) -> Generator[List[float], None, None]:
         increment = 1.0 / self.framerate
         t = 0.0
         while True:
-            block = []
-            for _ in range(blocksize):
-                block.append(self.amplitude if int(2*t*self.frequency) % 2 == 0 else -self.amplitude)
+            if single_samples:
+                yield self.amplitude if int(2*t*self.frequency) % 2 == 0 else -self.amplitude
                 t += increment
-            yield block
+            else:
+                block = []
+                for _ in range(blocksize):
+                    block.append(self.amplitude if int(2*t*self.frequency) % 2 == 0 else -self.amplitude)
+                    t += increment
+                yield block
 
 
 class WhiteNoise(Oscillator):
@@ -97,4 +102,4 @@ class WhiteNoise(Oscillator):
         increment = 2.0 * np.pi / self.framerate
         t = 0.0
         while True:
-            yield self.amplitude * np.random.uniform(low=-self.amplitude, high=self.amplitude, size=blocksize)
+            yield self.amplitude * random.uniform(-self.amplitude, self.amplitude)

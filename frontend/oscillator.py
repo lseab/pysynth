@@ -76,7 +76,7 @@ class OscillatorGUI(tk.Frame):
             "noise": WhiteNoise
             }
         self.input_waveformtype = tk.StringVar()
-        self.waveform = ttk.OptionMenu(self.wave_frame, self.input_waveformtype, 'sine', *self.waveforms.keys(), command=self.create_osc)
+        self.waveform = ttk.OptionMenu(self.wave_frame, self.input_waveformtype, 'sine', *self.waveforms.keys(), command=self.update_osc)
         self.waveform.grid(row=0, column=1)
 
         # Generate frequency frame
@@ -164,22 +164,29 @@ class OscillatorGUI(tk.Frame):
             self.fm_button.pack()
 
     def show_envelope(self, *args):
-        for o in self.gui.oscillators: o['bg'] = 'SystemButtonFace'
-        self['bg'] = 'SkyBlue1'
-        self.gui.show_envelope(self.osc, self.number)
+        try:
+            for o in self.gui.oscillators: o['bg'] = 'SystemButtonFace'
+            self['bg'] = 'SkyBlue1'
+            self.gui.show_envelope(self.osc, self.number)
+        except:
+            pass
 
-    def create_osc(self, *args):
+    def create_osc(self):
         """
         Instantiate oscillator after waveform type selection.
         """
-        if self.osc is not None:
-            del self.output.oscillators[self.number]
         self.waveform_choice = self.waveforms[self.input_waveformtype.get()]
         self.osc = self.waveform_choice(name=self.name)
         self.output.add_oscillator(self.osc, index=self.number)
         self.set_frequency()
         self.set_amplitude()
         self.freq_frame.pack()
+
+    def update_osc(self, *args):
+        if self.osc is not None:
+            del self.output.oscillators[self.number]
+        self.create_osc()
+        self.show_envelope()
 
     def disable_osc(self, *args):
         if str(self.waveform["state"]) == "normal":

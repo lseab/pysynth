@@ -107,7 +107,7 @@ class SynthGUI(ttk.Frame):
     def show_algorithms(self, *args):
         self.env_gui.pack_forget()
         self.pass_filter_gui.plot_frame.pack_forget()
-        self.config_frame.pack(side=tk.TOP, padx=10, pady=10)
+        self.config_frame.pack(expand=True, padx=10, pady=10)
 
     def show_envelope(self, oscillator, number):
         self.config_frame.pack_forget()
