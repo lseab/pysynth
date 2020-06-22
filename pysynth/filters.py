@@ -197,7 +197,7 @@ class Envelope(Filter):
                     block = []
                     self.amps = []
                     for _ in range(blocksize):
-                        block.append(next(source_blocks))
+                        block.append(next(source_data))
                         self.amps.append(amplitude)
                         amplitude = attack_base + amplitude * attack_multiplier
                     if modulate: yield block
@@ -212,7 +212,7 @@ class Envelope(Filter):
                     block = []
                     self.amps = []
                     for _ in range(blocksize):
-                        block.append(next(source_blocks))
+                        block.append(next(source_data))
                         self.amps.append(amplitude)
                         amplitude = decay_base + amplitude * decay_multiplier
                     if modulate: yield block
@@ -231,8 +231,8 @@ class Envelope(Filter):
 
             if self.state == 4:
                 if self.release == 0.0:
-                    amplitude = 0.0
-                    yield [0.0 for _ in range(blocksize)]
+                    self.amps = [0.0 for _ in range(blocksize)]
+                    yield self.amps
                 elif amplitude > 0:
                     block = []
                     self.amps = []
@@ -243,4 +243,5 @@ class Envelope(Filter):
                     if modulate: yield block
                     else: yield [a * b for (a, b) in zip(self.amps, block)]
                 else:
-                    yield [0.0 for _ in range(blocksize)]
+                    self.amps = [0.0 for _ in range(blocksize)]
+                    yield self.amps
