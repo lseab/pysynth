@@ -48,7 +48,7 @@ class AudioSample:
         """
         sample = cls(name=osc.__class__.__name__, framerate=osc.framerate, channels=1)
 
-        block_gen = osc.blocks()
+        block_gen = osc.data()
         total_frames = int(duration * osc.framerate)
         num_blocks, last_block = divmod(total_frames, params.blocksize)
         

@@ -31,7 +31,8 @@ class AlgorithmGUI(tk.Frame):
         self.three = tk.Radiobutton(self, image=self.three_image, value='3to1', variable=self.algo_var)
         self.three.grid(row=0, column=3, padx=20)
         # Custom Algorithm
-        self.custom = tk.Radiobutton(self, text='custom', value='custom', variable=self.algo_var)
+        self.custom_image = ImageTk.PhotoImage(Image.open(r'static/algorithms/custom.png').convert('RGBA').resize((70,22)))
+        self.custom = tk.Radiobutton(self, image=self.custom_image, value='custom', variable=self.algo_var)
         self.custom.grid(row=0, column=4, padx=20)
 
     def change_algorithm(self, *args):

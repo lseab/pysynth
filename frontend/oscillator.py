@@ -30,7 +30,7 @@ class FmButton(tk.Frame):
             self.gui.osc.to_oscillators.append(self.oscillator)
         else:
             self.gui.osc.to_oscillators.remove(self.oscillator)
-        self.gui.output.route_and_filter()
+        self.gui.output.do_routing()
 
 
 class OscillatorGUI(tk.Frame):

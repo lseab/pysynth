@@ -58,7 +58,7 @@ class AudioApi:
         Takes an audio data generator as input
         e.g an Oscillator object.
         """
-        self.data = data.blocks()
+        self.data = data.data()
         self.playing = True
 
     def stop(self):

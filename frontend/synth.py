@@ -169,7 +169,7 @@ class SynthGUI(tk.Tk):
         elif selected_algo == "parallel": self.algo_image = self.algo_frame.para_image        
         elif selected_algo == "square": self.algo_image = self.algo_frame.square_image
         elif selected_algo == "3to1": self.algo_image = self.algo_frame.three_image
-        else: self.algo_image = None
+        elif selected_algo == "custom": self.algo_image = self.algo_frame.custom_image
         try: 
             self.algo_label.destroy()
         except: pass

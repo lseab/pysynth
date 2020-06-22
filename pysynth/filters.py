@@ -26,9 +26,9 @@ class AmpModulationFilter(Filter):
     def __str__(self):
         return f'AmpMod({self.source}, {self.modulator})'
 
-    def blocks(self):
-        source = self.source.blocks()
-        modulator = self.modulator.blocks(single_samples=False)
+    def data(self):
+        source = self.source.data()
+        modulator = self.modulator.data(single_samples=False)
         while True:
             am_envelope = [(1.0 + i) for i in next(modulator)]
             yield [e * s for (e, s) in zip(am_envelope, next(source))]
@@ -41,16 +41,16 @@ class FreqModulationFilter(Filter):
     def __init__(self, source: Oscillator, modulator: Oscillator):
         super().__init__([source])
         self.source = source
-        self.source_blocks = source.blocks(modulate=True)
+        self.source_data = source.data(modulate=True)
         self.modulator = modulator
-        self.mod_blocks = modulator.blocks()
+        self.mod_data = modulator.data()
 
     def __str__(self):
         return f'FreqMod({self.source}, {self.modulator})'
 
-    def blocks(self, modulate=False):
+    def data(self, modulate=False):
         while True:
-            modulation = [s + m for (s, m) in zip(next(self.source_blocks), next(self.mod_blocks))]
+            modulation = [s + m for (s, m) in zip(next(self.source_data), next(self.mod_data))]
             if modulate:
                 yield modulation
             else:
@@ -72,13 +72,13 @@ class SumFilter(Filter):
     def normalise_amplitude(self):
         self.amplitude /= len(self.sources)
 
-    def blocks(self):
-        sources = [src.blocks() for src in self.sources]
-        source_blocks = zip(*sources)
+    def data(self):
+        sources = [src.data() for src in self.sources]
+        source_data = zip(*sources)
         amplitude = self.amplitude
         while True:
-            blocks = next(source_blocks)
-            yield [amplitude * sum(v) for v in zip(*blocks)]
+            data = next(source_data)
+            yield [amplitude * sum(v) for v in zip(*data)]
 
 
 class PassFilter(Filter):
@@ -106,8 +106,8 @@ class PassFilter(Filter):
         y, zf = lfilter(b, a, data, axis=0, zi=zi)
         return y, zf
 
-    def blocks(self):
-        source = self.source.blocks()
+    def data(self):
+        source = self.source.data()
         zi = lfilter_zi(*PassFilter.butterworth(self.cutoff, self.filter_type))
         while True:
             filtered_data, zi = self.butterworth_filter(next(source), self.cutoff, self.filter_type, zi)
@@ -171,11 +171,11 @@ class Envelope(Filter):
         """
         return (1.0 / (time * self.framerate)) * np.log(target / base)
 
-    def blocks(self, modulate=False):
+    def data(self, modulate=False):
         amplitude = 0.0
         max_amp = self.max_amp
         sustain_level = self.sustain_level
-        source_blocks = self.source.blocks(modulate=modulate)
+        source_data = self.source.data(modulate=modulate)
 
         # Calculate multipliers here for optimization
         if self.attack != 0.0:
@@ -224,7 +224,7 @@ class Envelope(Filter):
                 self.amps = []
                 amplitude = sustain_level
                 for _ in range(blocksize):
-                    block.append(next(source_blocks))
+                    block.append(next(source_data))
                     self.amps.append(sustain_level)
                 if modulate: yield block
                 else: yield [a * b for (a, b) in zip(self.amps, block)]
@@ -237,7 +237,7 @@ class Envelope(Filter):
                     block = []
                     self.amps = []
                     for _ in range(blocksize):
-                        block.append(next(source_blocks))
+                        block.append(next(source_data))
                         self.amps.append(amplitude)
                         amplitude = release_base + amplitude * release_multiplier
                     if modulate: yield block

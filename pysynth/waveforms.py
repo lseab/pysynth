@@ -37,7 +37,7 @@ class Oscillator:
         self.disabled = True
     
     @abstractmethod
-    def blocks(self) -> Generator[List[float], None, None]:
+    def data(self) -> Generator[List[float], None, None]:
         pass
 
 
@@ -49,7 +49,7 @@ class SineWave(Oscillator):
     def __init__(self, frequency: float = 0.0, amplitude: float = 1.0, framerate: int = framerate, name: str = ""):
         super().__init__(frequency, amplitude, framerate, name)
 
-    def blocks(self, modulate=False, single_samples=True) -> Generator[List[float], None, None]:
+    def data(self, modulate=False, single_samples=True) -> Generator[List[float], None, None]:
         increment = 2.0 * np.pi / self.framerate
         t = 0.0
         frequency = self.frequency
@@ -76,7 +76,7 @@ class SquareWave(Oscillator):
     def __init__(self, frequency: float = 0.0, amplitude: float = 1.0, framerate: int = framerate, name: str = ""):
         super().__init__(frequency, amplitude, framerate, name)
 
-    def blocks(self, modulate=False, single_samples=True) -> Generator[List[float], None, None]:
+    def data(self, modulate=False, single_samples=True) -> Generator[List[float], None, None]:
         increment = 1.0 / self.framerate
         t = 0.0
         while True:
@@ -98,7 +98,7 @@ class WhiteNoise(Oscillator):
     def __init__(self, frequency: float = 0.0, amplitude: float = 1.0, framerate: int = framerate, name: str = ""):
         super().__init__(frequency, amplitude, framerate, name)
 
-    def blocks(self, modulate=False) -> Generator[List[float], None, None]:
+    def data(self, modulate=False) -> Generator[List[float], None, None]:
         increment = 2.0 * np.pi / self.framerate
         t = 0.0
         while True:
