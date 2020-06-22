@@ -1,14 +1,13 @@
 import numpy as np
-from abc import ABC
 from pysynth.waveforms import Oscillator
 from typing import List
 from pysynth.params import blocksize, framerate
 from scipy.signal import butter, lfilter, freqz, lfilter_zi
 
 
-class Filter(ABC):
+class Filter():
     """
-    Abstract class for all filter objects.
+    Base class for all filter objects.
     """
     def __init__(self, sources: List[Oscillator]):
         self.sources = sources
@@ -23,6 +22,9 @@ class AmpModulationFilter(Filter):
         super().__init__([source])
         self.source = source
         self.modulator = modulator
+
+    def __str__(self):
+        return f'AmpMod({self.source}, {self.modulator})'
 
     def blocks(self):
         source = self.source.blocks()
@@ -57,7 +59,7 @@ class FreqModulationFilter(Filter):
 
 class SumFilter(Filter):
     """
-    Takes multiple oscillators as input generates a single output from them.
+    Takes multiple oscillators as input and generates a single output from them.
     """
     def __init__(self, sources: List[Oscillator], amplitude: float = 1.0, normalise: bool = True):
         super().__init__(list(sources))
@@ -80,6 +82,10 @@ class SumFilter(Filter):
 
 
 class PassFilter(Filter):
+    """
+    Uses a butterworth filter function (from the scipy library) to change the audio
+    bandwidth. Can be a lowpass or a highpass filter.
+    """
     def __init__(self, source: Oscillator, cutoff: float, filter_type: str):
         super().__init__([source])
         self.source = source
@@ -117,6 +123,32 @@ class PassFilter(Filter):
 
 
 class Envelope(Filter):
+    """
+    ADSR envelope generator. Takes a source oscillator as input, and yields oscillator data
+    multiplied by a variable amplitude envelope. There are four states in the envelope generator:
+        - ATTACK: triggered when a key is pressed, the output rises from 0 to maximum output 
+        according to a user-defined rate
+        - DECAY: triggered once maximum output is reached, the output then drops until it reaches a 
+        user-defined susain level
+        - SUSTAIN: output remains constant until a release event is triggered (a key is no longer pressed)
+        - RELEASE: output drops from the sustain level to 0 at a user-defined rate
+
+    The envelope generators are defined exponentially (in part to mimic the shape of capacitor charge/discharge).
+    The exponential calculations can be done in an iterative manner which makes them efficient. Indeed,
+    it is trivial to show that a function of the form y(x) = A * (1 - exp(rate * x)) can be generated iteratively in the 
+    following way:
+
+    y(x + 1) = y(x) * exp(rate) + A * (1 - exp(rate))
+
+    The rate is a constant, therefore exp(rate) can be calculated once and used as a multiplier in each subsequent iteration.
+
+    In order to calculate the envelope, we define a 'target' value above the trigger (maximum amplitude in the case 
+    of attack for example), which the exponential function 'reaches' asymptotically at x -> +∞. Hence in our y(x) function,
+    in the case of attack, our A constant would be (max_amplitude + target). Solving for rate such that max_amplitude is
+    reached in a given time (attack_time), it can be shown that:
+
+    rate = (1.0 / attack_time) * log(target / (max_amplitude + target))
+    """ 
     def __init__(self, source: Oscillator):
         super().__init__([source])
         self.source = source
@@ -133,8 +165,11 @@ class Envelope(Filter):
     def __str__(self):
         return str(self.source)
 
-    def get_coefficient(self, target, rate, base):
-        return (1.0 / (rate * self.framerate)) * np.log(target / base)
+    def get_rate(self, target, time, base):
+        """
+        Calculate the evolution rates for attack, decay and release states.
+        """
+        return (1.0 / (time * self.framerate)) * np.log(target / base)
 
     def blocks(self, modulate=False):
         amplitude = 0.0
@@ -142,14 +177,15 @@ class Envelope(Filter):
         sustain_level = self.sustain_level
         source_blocks = self.source.blocks(modulate=modulate)
 
+        # Calculate multipliers here for optimization
         if self.attack != 0.0:
-            attack_multiplier = np.exp(self.get_coefficient(target=self.a_target, rate=self.attack, base=(max_amp + self.a_target)))
+            attack_multiplier = np.exp(self.get_rate(target=self.a_target, time=self.attack, base=(max_amp + self.a_target)))
             attack_base = (max_amp + self.a_target) * (1 - attack_multiplier)
         if self.decay != 0.0:
-            decay_multiplier = np.exp(self.get_coefficient(target=self.dr_target, rate=self.decay, base=(max_amp - sustain_level + self.dr_target)))
+            decay_multiplier = np.exp(self.get_rate(target=self.dr_target, time=self.decay, base=(max_amp - sustain_level + self.dr_target)))
             decay_base = (sustain_level - self.dr_target) * (1 - decay_multiplier)
         if self.release != 0.0:
-            release_multiplier = np.exp(self.get_coefficient(target=self.dr_target, rate=self.release, base=(sustain_level + self.dr_target)))
+            release_multiplier = np.exp(self.get_rate(target=self.dr_target, time=self.release, base=(sustain_level + self.dr_target)))
             release_base = - self.dr_target * (1 - release_multiplier)
 
         while True:

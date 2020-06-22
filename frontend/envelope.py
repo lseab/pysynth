@@ -30,7 +30,7 @@ class EnvelopeGUI(tk.Frame):
         self.sustain_level = self.sustain_fraction * self.max_amp
         self.release_time = self.oscillator.envelope['release']
 
-    def get_coefficient(self, target, rate, base):
+    def get_rate(self, target, rate, base):
         return (1.0 / (rate * self.framerate)) * np.log(target / base)
 
     def envelopeFrame(self):
@@ -49,7 +49,7 @@ class EnvelopeGUI(tk.Frame):
         self.pack()
 
     def attack(self):
-        attack_coef = self.get_coefficient(self.a_target, self.attack_time, self.max_amp + self.a_target)
+        attack_coef = self.get_rate(self.a_target, self.attack_time, self.max_amp + self.a_target)
         self.time = self.attack_time
         x = np.linspace(0, self.time * self.framerate, num=20)
         amps = []
@@ -61,7 +61,7 @@ class EnvelopeGUI(tk.Frame):
         return (x, amps)
 
     def decay(self):
-        decay_coef = self.get_coefficient(self.dr_target, self.decay_time, self.max_amp - self.sustain_level + self.dr_target)
+        decay_coef = self.get_rate(self.dr_target, self.decay_time, self.max_amp - self.sustain_level + self.dr_target)
         x = np.linspace(self.time * self.framerate, (self.time + self.decay_time) * self.framerate, num=20)
         self.time = (self.time + self.decay_time)
         amps = []
@@ -79,7 +79,7 @@ class EnvelopeGUI(tk.Frame):
         return (x, amps)
 
     def release(self):
-        release_coef = self.get_coefficient(self.dr_target, self.release_time, self.sustain_level + self.dr_target)
+        release_coef = self.get_rate(self.dr_target, self.release_time, self.sustain_level + self.dr_target)
         x = np.linspace(self.time * self.framerate, (self.time + self.release_time) * self.framerate, num=20)
         amps = []
         for n, i in enumerate(x):

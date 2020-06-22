@@ -46,6 +46,9 @@ class OscillatorGUI(tk.Frame):
         self.osc = None        
         self.fm_frame = None
         self.UI()
+        self.frequency_frame()
+        self.amplitude_frame()
+        self.create_osc()
         self.bind("<Button-1>", self.show_envelope)
 
     def UI(self):
@@ -58,16 +61,7 @@ class OscillatorGUI(tk.Frame):
             r'static\oscillators\osC.png',
             r'static\oscillators\osD.png'
             ]
-            
-        self.wave_frame = tk.Frame(self)
-        self.wave_frame.pack(padx=10, pady=10)
-        self.image = Image.open(self.images[self.number]).convert('RGBA').resize((20,20))        
-        self.wave_icon = ImageTk.PhotoImage(self.image)
-        self.image_panel = tk.Label(self.wave_frame, image=self.wave_icon)
-        self.image_panel.grid(row=0, column=0)
-        self.image_panel.bind("<Button-1>", self.disable_osc)
-        
-        # Waveform choice
+
         self.waveforms = {
             "sine": SineWave,  
             "square": SquareWave,
@@ -75,21 +69,21 @@ class OscillatorGUI(tk.Frame):
             # "sawtooth": None,
             "noise": WhiteNoise
             }
+         
+        self.wave_frame = tk.Frame(self)
+        self.wave_frame.pack(padx=10, pady=10)
+        self.image = Image.open(self.images[self.number]).convert('RGBA').resize((20,20))        
+        self.wave_icon = ImageTk.PhotoImage(self.image)
+        self.image_panel = tk.Label(self.wave_frame, image=self.wave_icon)
+        self.image_panel.grid(row=0, column=0)
+        self.image_panel.bind("<Button-1>", self.disable_osc)
         self.input_waveformtype = tk.StringVar()
         self.waveform = ttk.OptionMenu(self.wave_frame, self.input_waveformtype, 'sine', *self.waveforms.keys(), command=self.update_osc)
         self.waveform.grid(row=0, column=1)
-
-        # Generate frequency frame
         self.ui_frame = tk.Frame(self)
         self.ui_frame.pack()
-        self.set_freq_frame()
-        self.amplitude_frame()
 
-        # Create oscillator object on creation.
-        # Defaults to sine.
-        self.create_osc()
-
-    def set_freq_frame(self):
+    def frequency_frame(self):
         self.freq_frame = tk.Frame(self.ui_frame)
         self.freq_frame.bind("<Button-1>", self.show_envelope)
         self.fixed_var = tk.BooleanVar(value=0)

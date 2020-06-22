@@ -93,7 +93,7 @@ class SquareWave(Oscillator):
 
 class WhiteNoise(Oscillator):
     """
-    White noise oscillator
+    White noise oscillator.
     """
     def __init__(self, frequency: float = 0.0, amplitude: float = 1.0, framerate: int = framerate, name: str = ""):
         super().__init__(frequency, amplitude, framerate, name)

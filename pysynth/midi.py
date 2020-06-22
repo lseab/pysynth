@@ -86,7 +86,7 @@ class MidiController:
 
     def update_oscillators(self):
         """
-        Extract midi info from controller if active and update oscillators.
+        Extract midi info from controller if active and add a new voice.
         """
         while self.active:
             if self.controller.poll():

@@ -3,7 +3,9 @@ import numpy as np
 
 
 class AudioApi:
-
+    """
+    Api to interface with PortAudio using the sounddevice library.
+    """
     def __init__(self, framerate: int, blocksize: int, channels: int):
         self.framerate = framerate
         self.channels = channels        
@@ -60,4 +62,7 @@ class AudioApi:
         self.playing = True
 
     def stop(self):
+        """
+        Stop audio playback.
+        """
         self.playing = False

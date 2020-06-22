@@ -3,7 +3,9 @@ from collections import ChainMap
 from pysynth.filters import FreqModulationFilter, SumFilter
 
 class Routing:
-
+    """
+    For a given set of oscillators, the Routing object creates the FM data pipeline.
+    """
     def __init__(self, oscillators):
         self.oscillators = oscillators
 
