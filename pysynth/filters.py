@@ -5,7 +5,7 @@ from pysynth.params import blocksize, framerate
 from scipy.signal import butter, lfilter, freqz, lfilter_zi
 
 
-class Filter():
+class Filter:
     """
     Base class for all filter objects.
     """
