@@ -21,8 +21,7 @@ Install the packages into it from the requirements file
 ```console
 (venv) $ pip install -r requirements.txt
 ```
-
-### Run main.py in your terminal
+Run main.py in your terminal
 ```console
 (venv) $ python main.py
 ```
