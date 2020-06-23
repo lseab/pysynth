@@ -197,7 +197,7 @@ class OscillatorGUI(tk.Frame):
             self.waveform["state"] = "normal"
             self.set_amplitude()
             self.osc.disabled = False
-        self.output.route_and_filter()
+        self.output.do_routing()
 
     def set_frequency(self, *args):
         """

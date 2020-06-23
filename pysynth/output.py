@@ -80,7 +80,7 @@ class Output:
         Perform routing (creating the FM data pipeline).
         """
         for voice in self.voices:
-            voice.route_and_filter()
+            voice.do_routing()
 
     def apply_final_filters(self, signal):
         """
