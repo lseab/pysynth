@@ -1,4 +1,4 @@
-#### Pysynth
+# Pysynth
 Early attempts at building a synthesizer in python.
 
 This is a Frequency Modulation (FM) synth, heavily inspired by Ableton's native Operator.
