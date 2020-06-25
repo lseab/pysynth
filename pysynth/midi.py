@@ -95,7 +95,6 @@ class MidiController:
                     try:
                         voice = VoiceChannel(self.output, frequency=int(midi_event.frequency))
                         self.output.add_new_voice(voice)
-                        self.output.play()
                     except AttributeError:
                         pass
                 if midi_event.event_type == "Off":

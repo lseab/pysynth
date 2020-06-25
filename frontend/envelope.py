@@ -1,6 +1,7 @@
 import tkinter as tk
 import matplotlib.pyplot as plt
 import numpy as np
+from math import log10
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from pysynth.waveforms import SineWave
@@ -144,7 +145,7 @@ class EnvelopeGUI(tk.Frame):
         self.r_frame.grid(row=0, column=2, padx=5)
         self.r_label = tk.Label(self.r_frame, text="Release")
         self.r_label.pack()
-        self.r_time = tk.Scale(self.r_frame, from_=0, to=5, orient=tk.HORIZONTAL, resolution=.02, command=self.change_release_time)
+        self.r_time = tk.Scale(self.r_frame, from_=0.05, to=5, orient=tk.HORIZONTAL, resolution=.02, command=self.change_release_time)
         self.r_time.set(self.release_time)
         self.r_time.pack()        
         ## SUSTAIN
@@ -166,7 +167,7 @@ class EnvelopeGUI(tk.Frame):
         self.a_shape_label = tk.Label(self.a_shape_frame, text="Attack Shape")
         self.a_shape_label.pack()
         self.a_shape = tk.Scale(self.a_shape_frame, from_=0, to=6, orient=tk.HORIZONTAL, resolution=0.1, command=self.change_a_target, showvalue=0)
-        self.a_shape.set(10 ** (-self.a_target))
+        self.a_shape.set(-log10(self.a_target))
         self.a_shape.pack()
         ## DECAY/RELEASE SHAPE
         self.dr_shape_frame = tk.Frame(self.shape_frame)
@@ -174,7 +175,7 @@ class EnvelopeGUI(tk.Frame):
         self.dr_shape_label = tk.Label(self.dr_shape_frame, text="Decay/Release Shape")
         self.dr_shape_label.pack()
         self.dr_shape = tk.Scale(self.dr_shape_frame, from_=0, to=6, orient=tk.HORIZONTAL, resolution=0.1, command=self.change_decay_dr_target, showvalue=0)
-        self.dr_shape.set(10 ** (-self.dr_target))
+        self.dr_shape.set(-log10(self.dr_target))
         self.dr_shape.pack()
 
     def change_attack_time(self, *args):
@@ -226,9 +227,7 @@ class EnvelopeGUI(tk.Frame):
         self.d_time.set(self.decay_time)
         self.r_time.set(self.release_time)
         self.s_level.set(self.sustain_fraction)
-        self.a_shape.set(10 ** (-self.a_target))
-        self.dr_shape.set(10 ** (-self.dr_target))
-        self.plot.cla()
+        self.a_shape.set(-log10(self.a_target))
+        self.dr_shape.set(-log10(self.dr_target))
+        self.replot()
         self.plot.set_facecolor(colours[number])
-        self.draw()
-        self.canvas.draw()

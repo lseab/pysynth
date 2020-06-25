@@ -1,15 +1,16 @@
 from pysynth.params import blocksize, framerate
 from copy import deepcopy, copy
 from pysynth.audio_api import AudioApi
-from pysynth.filters import AmpModulationFilter, FreqModulationFilter, SumFilter, Envelope, PassFilter
+from pysynth.filters import AmpModulationFilter, FreqModulationFilter, SumFilter, Envelope, PassFilter, PopFilter, VoicesSumFilter
 from pysynth.routing import Routing
+from pysynth.waveforms import EmptyOscillator
 
 
 class Output:
     """
     Central output object for implementing the audio logic.
-    Keeps a reference of all created oscillator and VoiceChannel objects and  
-    sends data to PortAudio through the AudioApi object.
+    Keeps a reference of all created oscillators and VoiceChannel objects.
+    Sends data to PortAudio through the AudioApi object.
     """
     def __init__(self):
         self.audio_api = AudioApi(framerate=framerate, blocksize=blocksize, channels=1)
@@ -17,15 +18,16 @@ class Output:
         self.filter_type = "lowpass"
         self.filter_cutoff = 18000
         self.oscillators = []
-        self.voices = []
-        self.max_voices = 6
+        self.active_voices = []
+        self.max_voices = 4
+        self.open_audio()
 
     def add_oscillator(self, oscillator, index):
         """
         Adds an oscillator to the list, and recalculates the routing.
         """
         self.oscillators.insert(index, oscillator)
-        self.do_routing()
+        self.route_and_filter()
 
     def get_next_oscillators(self, osc):
         """
@@ -40,55 +42,35 @@ class Output:
         This function is called when 
         """
         self.am_modulator = waveform
-        self.do_routing()
+        self.route_and_filter()
 
     def add_new_voice(self, voice):
         """
         A new VoiceChannel object is created each time a key is pressed, and added to the voice list.
         """
-        if len(self.voices) >= self.max_voices:
-            self.voices.pop()
-        self.voices.append(voice)
+
+        if len(self.active_voices) >= self.max_voices:
+            self.active_voices[-1].release_notes()
+            self.active_voices.pop()
+        self.final_output.add_source(PopFilter(voice.filtered_output), max=self.max_voices)
+        self.active_voices.append(voice)
 
     def release_notes(self, frequency):
         """
         This function is called when a key is released, and the voice channel is removed.
         """
-        for voice in self.voices:
+        for voice in self.active_voices:
             if voice.frequency == frequency: 
                 voice.release_notes()
-                self.voices.remove(voice)
+                index = self.active_voices.index(voice)
+                del self.active_voices[index]
 
-    def tremolo(self, source):
-        """
-        Add a tremolo effect (amplitude modulation) to the audio data pipeline.
-        """
-        if self.am_modulator:
-            return AmpModulationFilter(source=source, modulator=self.am_modulator)
-        else:
-            return source
-
-    def pass_filter(self, source):
-        """
-        Add a filter (butterworth) to the audio data pipeline.
-        """
-        if self.filter_type == "lowpass": return PassFilter.lowpass(source, self.filter_cutoff)
-        elif self.filter_type == "highpass": return PassFilter.highpass(source, self.filter_cutoff)
-
-    def do_routing(self):
+    def route_and_filter(self):
         """
         Perform routing (creating the FM data pipeline).
         """
-        for voice in self.voices:
-            voice.do_routing()
-
-    def apply_final_filters(self, signal):
-        """
-        Apply filters after routing.
-        """
-        final_output = self.tremolo(signal)
-        final_output = self.pass_filter(final_output)
-        return final_output
+        for voice in self.active_voices:
+            voice.route_and_filter()
 
     def choose_algorithm(self, algo):
         """
@@ -99,22 +81,14 @@ class Output:
         algorithms = Algorithms(self.oscillators)
         algo_function = algorithms.algorithm_switch().get(algo)
         algo_function()
-        self.do_routing()
+        self.route_and_filter()
 
-    def get_output(self):
-        """
-        Before audio playback, create a generator summing the different voices.
-        """
-        outputs = [voice.filtered_output for voice in self.voices]
-        return SumFilter(outputs)
-
-    def play(self):
+    def open_audio(self):
         """
         Perform routing, filtering and start playback.
         """
-        output = self.get_output()
-        final_output = self.apply_final_filters(output)
-        self.audio_api.play(final_output)
+        self.final_output = VoicesSumFilter(normalise=False)
+        self.audio_api.play(self.final_output)
 
     def stop(self):
         """
@@ -183,11 +157,14 @@ class VoiceChannel:
     def __init__(self, output, frequency):
         oscillators = deepcopy(output.oscillators)
         self.oscillators = [Envelope(o) for o in oscillators]
+        self.am_modulator = output.am_modulator
+        self.filter_type = output.filter_type
+        self.filter_cutoff = output.filter_cutoff
         self.set_frequency(frequency)
         self.frequency = frequency
-        self.do_routing()
+        self.route_and_filter()
 
-    def do_routing(self):
+    def route_and_filter(self):
         """
         Instantiate a Routing object which outputs the carrier waves after FM modulation.
         The resulting waves are then summed.
@@ -195,8 +172,33 @@ class VoiceChannel:
         routing = Routing(self.oscillators)
         carriers = routing.get_final_output()
         if len(carriers) > 1: 
-            self.filtered_output = routing.sum_signals(carriers)
-        else: self.filtered_output = carriers[0]
+            output = routing.sum_signals(carriers)
+        else: output = carriers[0]
+        self.filtered_output = self.apply_final_filters(output)
+
+    def apply_final_filters(self, signal):
+        """
+        Apply filters after routing.
+        """
+        final_output = self.tremolo(signal)
+        final_output = self.pass_filter(final_output)
+        return final_output
+
+    def tremolo(self, source):
+        """
+        Add a tremolo effect (amplitude modulation) to the audio data pipeline.
+        """
+        if self.am_modulator:
+            return AmpModulationFilter(source=source, modulator=self.am_modulator)
+        else:
+            return source
+
+    def pass_filter(self, source):
+        """
+        Add a filter (butterworth) to the audio data pipeline.
+        """
+        if self.filter_type == "lowpass": return PassFilter.lowpass(source, self.filter_cutoff)
+        elif self.filter_type == "highpass": return PassFilter.highpass(source, self.filter_cutoff)
 
     def set_frequency(self, frequency):
         """

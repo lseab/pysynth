@@ -1,7 +1,7 @@
 import numpy as np
-from pysynth.waveforms import Oscillator
+from pysynth.waveforms import Oscillator, EmptyOscillator
 from typing import List
-from pysynth.params import blocksize, framerate
+from pysynth.params import blocksize, framerate, fade_in_time
 from scipy.signal import butter, lfilter, freqz, lfilter_zi
 
 
@@ -12,6 +12,7 @@ class Filter:
     def __init__(self, sources: List[Oscillator]):
         self.sources = sources
         self.framerate = sources[0].framerate if sources else 0
+        self.state = 1
 
 
 class AmpModulationFilter(Filter):
@@ -32,6 +33,7 @@ class AmpModulationFilter(Filter):
         while True:
             am_envelope = [(1.0 + i) for i in next(modulator)]
             yield [e * s for (e, s) in zip(am_envelope, next(source))]
+            self.state = self.source.state
 
 
 class FreqModulationFilter(Filter):
@@ -55,6 +57,7 @@ class FreqModulationFilter(Filter):
                 yield modulation
             else:
                 yield [a * b for (a, b) in zip(self.source.amps, np.cos(modulation))]
+                self.state = self.source.state
 
 
 class SumFilter(Filter):
@@ -79,6 +82,50 @@ class SumFilter(Filter):
         while True:
             data = next(source_data)
             yield [amplitude * sum(v) for v in zip(*data)]
+            self.state = sum([source.state for source in self.sources])
+
+
+class VoicesSumFilter(Filter):
+    """
+    Takes the filtered output of multiple voices as input and generates a single output from them.
+    """
+    def __init__(self, sources: List[Oscillator] = [], amplitude: float = 1.0, normalise: bool = True):
+        super().__init__(list(sources))
+        self.amplitude = amplitude
+        self.sources = [PopFilter(source) for source in self.sources]
+        if normalise: self.normalise_amplitude()
+
+    def __str__(self):
+        return f'Sum{tuple(str(s) for s in self.sources)}'
+
+    def add_source(self, source, max):
+        self.sources.append(source)
+        self.generators.append(source.data())
+        self.source_data = zip(*self.generators)
+
+    def remove_source(self, source):
+        index = self.sources.index(source)
+        self.sources.remove(source)
+        del self.generators[index]
+
+    def prepare_source_data(self):        
+        self.generators = [src.data() for src in self.sources]
+        self.source_data = zip(*self.generators)
+
+    def normalise_amplitude(self):
+        self.amplitude /= len(self.sources)
+
+    def data(self):
+        self.prepare_source_data()
+        while True:
+            try:
+                data = next(self.source_data)
+                yield [self.amplitude * sum(v) for v in zip(*data)]
+                for source in self.sources:
+                    if source.state == 0:
+                        self.remove_source(source)
+            except StopIteration:
+                yield [0.0 for _ in range(blocksize)]
 
 
 class PassFilter(Filter):
@@ -112,6 +159,7 @@ class PassFilter(Filter):
         while True:
             filtered_data, zi = self.butterworth_filter(next(source), self.cutoff, self.filter_type, zi)
             yield filtered_data
+            self.state = self.source.state
 
     @classmethod
     def lowpass(cls, *args):
@@ -153,7 +201,6 @@ class Envelope(Filter):
         super().__init__([source])
         self.source = source
         self.amps = [0.0 for _ in range(blocksize)]
-        self.state = 1
         self.max_amp = source.amplitude
         self.attack = source.envelope['attack']
         self.decay = source.envelope['decay']
@@ -189,6 +236,7 @@ class Envelope(Filter):
             release_base = - self.dr_target * (1 - release_multiplier)
 
         while True:
+            # ATTACK STATE
             if self.state == 1:
                 if self.attack == 0.0:
                     amplitude = max_amp
@@ -204,6 +252,7 @@ class Envelope(Filter):
                     else: yield [a * b for (a, b) in zip(self.amps, block)]
                     if amplitude >= max_amp: self.state = 2
 
+            # DECAY STATE
             if self.state == 2:
                 if self.decay == 0.0:
                     amplitude = max_amp
@@ -219,6 +268,7 @@ class Envelope(Filter):
                     else: yield [a * b for (a, b) in zip(self.amps, block)]
                     if amplitude <= sustain_level: self.state = 3
 
+            # SUSTAIN STATE
             if self.state == 3:
                 block = []
                 self.amps = []
@@ -229,10 +279,10 @@ class Envelope(Filter):
                 if modulate: yield block
                 else: yield [a * b for (a, b) in zip(self.amps, block)]
 
+            # RELEASE STATE
             if self.state == 4:
                 if self.release == 0.0:
-                    self.amps = [0.0 for _ in range(blocksize)]
-                    yield self.amps
+                    self.state = 0
                 elif amplitude > 0:
                     block = []
                     self.amps = []
@@ -243,5 +293,40 @@ class Envelope(Filter):
                     if modulate: yield block
                     else: yield [a * b for (a, b) in zip(self.amps, block)]
                 else:
-                    self.amps = [0.0 for _ in range(blocksize)]
-                    yield self.amps
+                    self.state = 0
+
+            # IDLE STATE
+            if self.state == 0:
+                self.amps = [0.0 for _ in range(blocksize)]
+                yield self.amps
+
+
+class PopFilter(Filter):
+    """
+    Filter added to every new voice to avoid popping sounds.
+    """
+    def __init__(self, source: Oscillator):
+        super().__init__([source])
+        self.source = source
+
+    def __str__(self):
+        return str(self.source)
+
+    def data(self):
+        source_data = self.source.data()
+        frame_nr = fade_in_time * framerate
+        if frame_nr > 0: increment = 1 / frame_nr
+        fade_factor = 0.0
+
+        while frame_nr > 0:
+            data = next(source_data)
+            for i, frame in enumerate(data):
+                data[i] = frame * fade_factor
+                if frame_nr > 0: 
+                    frame_nr -= 1
+                    fade_factor += increment
+            yield data
+        
+        while True:
+            yield next(source_data)
+            self.state = self.source.state

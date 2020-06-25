@@ -37,7 +37,6 @@ class KeyboardGUI(tk.Frame):
             def press_key(event, frequency=frequency, octave=octave):
                 voice = VoiceChannel(output, frequency=frequency)
                 output.add_new_voice(voice)
-                output.play()
 
             def release_key(event, frequency=frequency):
                 output.release_notes(frequency)
@@ -62,7 +61,6 @@ class KeyboardGUI(tk.Frame):
                 def press_key(event, frequency=frequency, octave=octave):
                     voice = VoiceChannel(output, frequency=frequency)
                     output.add_new_voice(voice)
-                    output.play()
 
                 def release_key(event, frequency=frequency):
                     output.release_notes(frequency)

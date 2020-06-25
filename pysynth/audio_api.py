@@ -53,12 +53,12 @@ class AudioApi:
             except StopIteration:
                 raise sd.CallbackStop
 
-    def play(self, data):
+    def play(self, output):
         """
         Takes an audio data generator as input
         e.g an Oscillator object.
         """
-        self.data = data.data()
+        self.data = output.data()
         self.playing = True
 
     def stop(self):

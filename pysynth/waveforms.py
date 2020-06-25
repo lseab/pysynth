@@ -24,9 +24,9 @@ class Oscillator:
             "attack": 0.0,
             "decay": 0.0,
             "sustain": 1.0,
-            "release": 0.0,
+            "release": 0.05,
             "a_target": 1,
-            "dr_target": 1
+            "dr_target": 10**(-6)
         }
 
     def __str__(self):
@@ -46,7 +46,7 @@ class SineWave(Oscillator):
     Pure sine wave oscillator.
     Modulate flag in blocks() allows for FM modulation.
     """
-    def __init__(self, frequency: float = 0.0, amplitude: float = 1.0, framerate: int = framerate, name: str = ""):
+    def __init__(self, frequency: float = 0.0, amplitude: float = 0.1, framerate: int = framerate, name: str = ""):
         super().__init__(frequency, amplitude, framerate, name)
 
     def data(self, modulate=False, single_samples=True) -> Generator[List[float], None, None]:
@@ -73,7 +73,7 @@ class SquareWave(Oscillator):
     """
     Pure square wave oscillator.
     """
-    def __init__(self, frequency: float = 0.0, amplitude: float = 1.0, framerate: int = framerate, name: str = ""):
+    def __init__(self, frequency: float = 0.0, amplitude: float = 0.1, framerate: int = framerate, name: str = ""):
         super().__init__(frequency, amplitude, framerate, name)
 
     def data(self, modulate=False, single_samples=True) -> Generator[List[float], None, None]:
@@ -95,7 +95,7 @@ class WhiteNoise(Oscillator):
     """
     White noise oscillator.
     """
-    def __init__(self, frequency: float = 0.0, amplitude: float = 1.0, framerate: int = framerate, name: str = ""):
+    def __init__(self, frequency: float = 0.0, amplitude: float = 0.1, framerate: int = framerate, name: str = ""):
         super().__init__(frequency, amplitude, framerate, name)
 
     def data(self, modulate=False) -> Generator[List[float], None, None]:
@@ -103,3 +103,12 @@ class WhiteNoise(Oscillator):
         t = 0.0
         while True:
             yield self.amplitude * random.uniform(-self.amplitude, self.amplitude)
+
+
+class EmptyOscillator(Oscillator):
+    def __init__(self, frequency: float = 0.0, amplitude: float = 0.1, framerate: int = framerate, name: str = ""):
+        super().__init__(frequency, amplitude, framerate, name)
+
+    def data(self, modulate=False) -> Generator[List[float], None, None]:
+        while True:
+            yield 0.0

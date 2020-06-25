@@ -30,7 +30,7 @@ class FmButton(tk.Frame):
             self.gui.osc.to_oscillators.append(self.oscillator)
         else:
             self.gui.osc.to_oscillators.remove(self.oscillator)
-        self.gui.output.do_routing()
+        self.gui.output.route_and_filter()
 
 
 class OscillatorGUI(tk.Frame):
@@ -135,8 +135,8 @@ class OscillatorGUI(tk.Frame):
         self.amp_frame = tk.Frame(self.ui_frame)
         self.amp_frame.bind("<Button-1>", self.show_envelope)
         self.amp_frame.pack()
-        self.amplitude = tk.Scale(self.amp_frame, from_=0, to=5, orient=tk.HORIZONTAL, resolution=.02, command=self.set_amplitude, relief=tk.RIDGE)
-        self.amplitude.set(1.0)
+        self.amplitude = tk.Scale(self.amp_frame, from_=0, to=1, orient=tk.HORIZONTAL, resolution=.02, command=self.set_amplitude, relief=tk.RIDGE)
+        self.amplitude.set(0.1)
         self.amplitude.pack(pady=10)
 
     def freq_mod_frame(self):
@@ -197,16 +197,16 @@ class OscillatorGUI(tk.Frame):
             self.waveform["state"] = "normal"
             self.set_amplitude()
             self.osc.disabled = False
-        self.output.do_routing()
+        self.output.route_and_filter()
 
     def set_frequency(self, *args):
         """
         Set frequency to input value.
         """
-        if self.osc: self.osc.frequency= float(self.input_freq.get())
+        if self.osc: self.osc.frequency = float(self.input_freq.get())
 
     def set_amplitude(self, *args):
         """
         Set amplitude to input value.
         """
-        if self.osc: self.osc.amplitude= float(self.amplitude.get())
+        if self.osc: self.osc.amplitude = float(self.amplitude.get())
