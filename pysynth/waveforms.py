@@ -6,16 +6,24 @@ import sounddevice as sd
 from pysynth.params import blocksize, framerate
 
 
-class Oscillator:
+class Oscillator(ABC):
     """
-    Abstract class for all oscillator objects.
-    Requires a List[float] generator for instantiation.
+    Abstract oscillator class.
     """
+    def __init__(self, framerate):
+        self.framerate = framerate
+
+    @abstractmethod
+    def data(self) -> Generator[List[float], None, None]:
+        pass
+
+class BaseOscillator(Oscillator):
+
     def __init__(self, frequency, amplitude, framerate, name):
+        super().__init__(framerate)
         self.disabled = False
         self.frequency = frequency
         self.amplitude = amplitude
-        self.framerate = framerate
         self.name = name
         self.to_oscillators = []        
         self.fixed_frequency = False
@@ -35,13 +43,9 @@ class Oscillator:
     def disable(self):
         self.amplitude = 0.0
         self.disabled = True
-    
-    @abstractmethod
-    def data(self) -> Generator[List[float], None, None]:
-        pass
 
 
-class SineWave(Oscillator):
+class SineWave(BaseOscillator):
     """
     Pure sine wave oscillator.
     Modulate flag in blocks() allows for FM modulation.
@@ -69,7 +73,7 @@ class SineWave(Oscillator):
                 yield block
 
 
-class SquareWave(Oscillator):
+class SquareWave(BaseOscillator):
     """
     Pure square wave oscillator.
     """
@@ -91,7 +95,7 @@ class SquareWave(Oscillator):
                 yield block
 
 
-class WhiteNoise(Oscillator):
+class WhiteNoise(BaseOscillator):
     """
     White noise oscillator.
     """
@@ -105,7 +109,7 @@ class WhiteNoise(Oscillator):
             yield self.amplitude * random.uniform(-self.amplitude, self.amplitude)
 
 
-class EmptyOscillator(Oscillator):
+class EmptyOscillator(BaseOscillator):
     def __init__(self, frequency: float = 0.0, amplitude: float = 0.1, framerate: int = framerate, name: str = ""):
         super().__init__(frequency, amplitude, framerate, name)
 

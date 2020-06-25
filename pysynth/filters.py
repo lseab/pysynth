@@ -1,17 +1,21 @@
 import numpy as np
+from abc import ABC
 from pysynth.waveforms import Oscillator, EmptyOscillator
 from typing import List
 from pysynth.params import blocksize, framerate, fade_in_time
 from scipy.signal import butter, lfilter, freqz, lfilter_zi
 
 
-class Filter:
+class Filter(Oscillator, ABC):
     """
     Base class for all filter objects.
+    All filters have a state flag, which is updated as the ADSR state of the sources changes. This state flag
+    is passed along every stage of the data pipeline, thus allowing to control for idle voices in VoicesSumFilter,
+    and remove them.
     """
     def __init__(self, sources: List[Oscillator]):
+        super().__init__(sources[0].framerate if sources else 0)
         self.sources = sources
-        self.framerate = sources[0].framerate if sources else 0
         self.state = 1
 
 
@@ -304,6 +308,7 @@ class Envelope(Filter):
 class PopFilter(Filter):
     """
     Filter added to every new voice to avoid popping sounds.
+    This is the last filter to be added to the output from each new VoiceChannel object.
     """
     def __init__(self, source: Oscillator):
         super().__init__([source])
