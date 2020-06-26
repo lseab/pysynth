@@ -7,8 +7,8 @@ class LogScale(Frame):
         self.number = 0
         self.slide = Scale(self, command=self.logValue, showvalue=0, **kwargs)
         self.text = Label(self, text=10)
-        self.slide.pack()
         self.text.pack()
+        self.slide.pack()
 
     def logValue(self, val):
         if 10**float(val) > 1000:

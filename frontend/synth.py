@@ -134,10 +134,12 @@ class SynthGUI(tk.Tk):
         self.trem_gui = TremoloGUI(self.filters_frame_left, output=self.output, 
                                                 width=200, height=160, relief=tk.RAISED, borderwidth=2)
         self.trem_gui.pack(padx=10, pady=10)
+        # Pass filter
         self.pass_filter_gui = PassFilterGUI(self.filters_frame_right, output=self.output, display_frame=self.display_frame,
                                                 width=200, height=160, relief=tk.RAISED, borderwidth=2)
         self.pass_filter_gui.pack(padx=10, pady=10)
         self.pass_filter_gui.bind("<Button-1>", self.show_pass_filter)
+        self.pass_filter_gui.cutoff.slide.bind("<Button-1>", self.show_pass_filter)
 
     def keyboard_frame(self):
         """
