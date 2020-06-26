@@ -174,7 +174,7 @@ class EnvelopeGUI(tk.Frame):
         self.dr_shape_frame.grid(row=0, column=1, padx=5)
         self.dr_shape_label = tk.Label(self.dr_shape_frame, text="Decay/Release Shape")
         self.dr_shape_label.pack()
-        self.dr_shape = tk.Scale(self.dr_shape_frame, from_=0, to=6, orient=tk.HORIZONTAL, resolution=0.1, command=self.change_decay_dr_target, showvalue=0)
+        self.dr_shape = tk.Scale(self.dr_shape_frame, from_=0, to=6, orient=tk.HORIZONTAL, resolution=0.1, command=self.change_dr_target, showvalue=0)
         self.dr_shape.set(-log10(self.dr_target))
         self.dr_shape.pack()
 
@@ -194,6 +194,7 @@ class EnvelopeGUI(tk.Frame):
         release_time = self.r_time.get()
         self.release_time = release_time
         self.oscillator.envelope['release'] = release_time
+        if release_time < 0.1: self.dr_shape.set(6)
         self.replot()
 
     def change_sustain(self, *args):
@@ -208,7 +209,7 @@ class EnvelopeGUI(tk.Frame):
         self.oscillator.envelope['a_target'] = a_target
         self.replot()
 
-    def change_decay_dr_target(self, *args):
+    def change_dr_target(self, *args):
         dr_target = 10 ** (-self.dr_shape.get())
         self.dr_target = dr_target
         self.oscillator.envelope['dr_target'] = dr_target
@@ -229,5 +230,5 @@ class EnvelopeGUI(tk.Frame):
         self.s_level.set(self.sustain_fraction)
         self.a_shape.set(-log10(self.a_target))
         self.dr_shape.set(-log10(self.dr_target))
-        self.replot()
         self.plot.set_facecolor(colours[number])
+        self.replot()
