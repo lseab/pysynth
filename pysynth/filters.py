@@ -150,7 +150,7 @@ class PassFilter(Filter):
     @staticmethod
     def frequency_response(cutoff, filter_type, order=3):
         b, a = PassFilter.butterworth(cutoff, filter_type, order)
-        return freqz(b, a, fs=framerate, worN=100)
+        return freqz(b, a, fs=framerate, worN=500)
 
     def butterworth_filter(self, data, cutoff, filter_type, zi, order=3):
         b, a = PassFilter.butterworth(cutoff, filter_type, order)

@@ -1,10 +1,12 @@
 import tkinter as tk
 from tkinter import ttk
 import numpy as np
+from math import log10
 from pysynth.waveforms import SineWave, SquareWave
 from pysynth.filters import PassFilter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+from .gui_helpers import LogScale
 
 
 class TremoloGUI(tk.LabelFrame):
@@ -83,13 +85,13 @@ class PassFilterGUI(tk.LabelFrame):
         # Cutoff slider
         self.cutoff_label = tk.Label(self.control_frame, text='Freq.')
         self.cutoff_label.grid(row=1, column=0)
-        self.cutoff = tk.Scale(self.control_frame, from_=30, to=18000, orient=tk.HORIZONTAL, resolution=10, command=self.set_cutoff)
-        self.cutoff.set(18000)
+        self.cutoff = LogScale(self.control_frame, command=self.set_cutoff, from_=2, to=4.3, orient=tk.HORIZONTAL, resolution=0.01)
+        self.cutoff.set(4.3)
         self.cutoff.grid(row=1, column=1, pady=20)
 
     def set_cutoff(self, *args):
         cutoff = self.cutoff.get()
-        self.output.filter_cutoff = cutoff
+        self.output.filter_cutoff = 10 ** cutoff
         self.replot()
 
     def set_filter_type(self, *args):
@@ -118,6 +120,7 @@ class PassFilterGUI(tk.LabelFrame):
         filter_type = self.output.filter_type
         w, h = PassFilter.frequency_response(cutoff, filter_type)
         self.plot.plot(w, np.abs(h), 'b')
+        self.plot.set_xscale('log')
         self.plot.axvline(cutoff, color='k')
 
     def replot(self):
