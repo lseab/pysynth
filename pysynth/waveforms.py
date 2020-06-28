@@ -17,6 +17,7 @@ class Oscillator(ABC):
     def data(self) -> Generator[List[float], None, None]:
         pass
 
+
 class BaseOscillator(Oscillator):
 
     def __init__(self, frequency, amplitude, framerate, name):

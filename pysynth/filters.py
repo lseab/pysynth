@@ -225,7 +225,10 @@ class Envelope(Filter):
     def data(self, modulate=False):
         amplitude = 0.0
         max_amp = self.max_amp
+        attack = self.attack
+        decay = self.decay
         sustain_level = self.sustain_level
+        release = self.release
         source_data = self.source.data(modulate=modulate)
 
         # Calculate multipliers here for optimization
@@ -242,7 +245,7 @@ class Envelope(Filter):
         while True:
             # ATTACK STATE
             if self.state == 1:
-                if self.attack == 0.0:
+                if attack == 0.0:
                     amplitude = max_amp
                     self.state = 2
                 else:
@@ -258,7 +261,7 @@ class Envelope(Filter):
 
             # DECAY STATE
             if self.state == 2:
-                if self.decay == 0.0:
+                if decay == 0.0:
                     amplitude = max_amp
                     self.state = 3
                 else:
@@ -285,7 +288,7 @@ class Envelope(Filter):
 
             # RELEASE STATE
             if self.state == 4:
-                if self.release == 0.0:
+                if release == 0.0 or sustain_level == 0.0:
                     self.state = 0
                 elif amplitude > 0:
                     block = []
