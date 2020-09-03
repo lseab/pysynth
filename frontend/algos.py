@@ -1,4 +1,5 @@
 import tkinter as tk
+from os.path import join
 from PIL import ImageTk, Image
 from pysynth.output import Algorithms
 
@@ -14,26 +15,39 @@ class AlgorithmGUI(tk.Frame):
         self.change_algorithm()
 
     def algo_buttons(self):
+        self.images = [
+            join('static', 'algorithms', 'stack.png'),
+            join('static', 'algorithms', 'parallel.png'),
+            join('static', 'algorithms', 'square.png'),
+            join('static', 'algorithms', '3to1.png'),
+            join('static', 'algorithms', 'custom.png')
+        ]
+
+        self.top_frame = tk.Frame(self)
+        self.top_frame.pack()
         # Stack Algorithm
-        self.stack_image = ImageTk.PhotoImage(Image.open(r'static/algorithms/stack.png').convert('RGBA').resize((20,100)))
-        self.stack = tk.Radiobutton(self, image=self.stack_image, value='stack', variable=self.algo_var)
+        self.stack_image = ImageTk.PhotoImage(Image.open(self.images[0]).convert('RGBA').resize((20,100)))
+        self.stack = tk.Radiobutton(self.top_frame, image=self.stack_image, value='stack', variable=self.algo_var)
         self.stack.grid(row=0, column=0, padx=20)
         # Parallel Algorithm
-        self.para_image = ImageTk.PhotoImage(Image.open(r'static/algorithms/parallel.png').convert('RGBA').resize((90,22)))
-        self.parallel = tk.Radiobutton(self, image=self.para_image, value='parallel', variable=self.algo_var)
+        self.para_image = ImageTk.PhotoImage(Image.open(self.images[1]).convert('RGBA').resize((90,22)))
+        self.parallel = tk.Radiobutton(self.top_frame, image=self.para_image, value='parallel', variable=self.algo_var)
         self.parallel.grid(row=0, column=1, padx=20)
         # Square Algorithm
-        self.square_image = ImageTk.PhotoImage(Image.open(r'static/algorithms/square.png').convert('RGBA').resize((40,45)))
-        self.square = tk.Radiobutton(self, image=self.square_image, value='square', variable=self.algo_var)
+        self.square_image = ImageTk.PhotoImage(Image.open(self.images[2]).convert('RGBA').resize((40,45)))
+        self.square = tk.Radiobutton(self.top_frame, image=self.square_image, value='square', variable=self.algo_var)
         self.square.grid(row=0, column=2, padx=20)
+
+        self.bottom_frame = tk.Frame(self)
+        self.bottom_frame.pack()
         # 3 to 1 algorithm
-        self.three_image = ImageTk.PhotoImage(Image.open(r'static/algorithms/3to1.png').convert('RGBA').resize((70,55)))
-        self.three = tk.Radiobutton(self, image=self.three_image, value='3to1', variable=self.algo_var)
-        self.three.grid(row=0, column=3, padx=20)
+        self.three_image = ImageTk.PhotoImage(Image.open(self.images[3]).convert('RGBA').resize((70,55)))
+        self.three = tk.Radiobutton(self.bottom_frame, image=self.three_image, value='3to1', variable=self.algo_var)
+        self.three.grid(row=0, column=0, padx=20)
         # Custom Algorithm
-        self.custom_image = ImageTk.PhotoImage(Image.open(r'static/algorithms/custom.png').convert('RGBA').resize((70,22)))
-        self.custom = tk.Radiobutton(self, image=self.custom_image, value='custom', variable=self.algo_var)
-        self.custom.grid(row=0, column=4, padx=20)
+        self.custom_image = ImageTk.PhotoImage(Image.open(self.images[4]).convert('RGBA').resize((70,22)))
+        self.custom = tk.Radiobutton(self.bottom_frame, image=self.custom_image, value='custom', variable=self.algo_var)
+        self.custom.grid(row=0, column=1, padx=20)
 
     def change_algorithm(self, *args):
         if self.algo_var.get() == 'custom':

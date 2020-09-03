@@ -61,10 +61,8 @@ class OscillatorGUI(tk.Frame):
             join('static', 'oscillators', 'osB.png'),
             join('static', 'oscillators', 'osC.png'),
             join('static', 'oscillators', 'osD.png')
-            ]
+        ]
             
-        
-
         self.waveforms = {
             "sine": SineWave,  
             "square": SquareWave,

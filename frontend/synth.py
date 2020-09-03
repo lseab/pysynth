@@ -11,6 +11,7 @@ from .filters import TremoloGUI, PassFilterGUI
 from .keyboard import KeyboardGUI
 from .algos import AlgorithmGUI
 from .envelope import EnvelopeGUI
+from .gui_helpers import ScrollFrame
 
 
 class SynthGUI(tk.Tk):
@@ -50,15 +51,19 @@ class SynthGUI(tk.Tk):
 
     def main_frames(self):
         """
-        Create and pack top level frames.
+        Create and pack top level frames with full screen scrollbar for redimensioning.
         """
-        self.oscframe = tk.Frame(self)
+        self.scroll_frame = ScrollFrame(self)
+        self.scroll_frame.pack()
+        self.main_frame = tk.Frame(self.scroll_frame.scrollwindow)
+        self.main_frame.pack()
+        self.oscframe = tk.Frame(self.main_frame)
         self.oscframe.pack()
-        self.disframe = tk.Frame(self)
+        self.disframe = tk.Frame(self.main_frame)
         self.disframe.pack()
-        self.keyframe = tk.Frame(self)
+        self.keyframe = tk.Frame(self.main_frame)
         self.keyframe.pack()
-        self.inputFrame = tk.Frame(self)
+        self.inputFrame = tk.Frame(self.main_frame)
         self.inputFrame.pack()
 
     def status_bar(self):
@@ -95,7 +100,7 @@ class SynthGUI(tk.Tk):
         """
         self.display_frame = tk.Frame(self.disframe, relief=tk.RAISED, borderwidth=2, 
                                         highlightbackground="light sky blue", highlightcolor="light sky blue", highlightthickness=20, 
-                                        height=450, width=700)
+                                        height=450, width=550)
         self.display_frame.grid(row=0, column=1, pady=20)
         self.display_frame.pack_propagate(False)
 

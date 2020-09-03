@@ -17,8 +17,8 @@ class KeyboardGUI(tk.Frame):
     def __init__(self, master, output):
         super().__init__(master)
         output = output
-        white_key_width = 40
-        white_key_height = 150
+        white_key_width = 30
+        white_key_height = 120
         black_key_width = white_key_width * 0.5
         black_key_height = white_key_height * 0.6
         num_octaves = 4
