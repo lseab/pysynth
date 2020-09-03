@@ -5,6 +5,7 @@ from pysynth.waveforms import SineWave, SquareWave, WhiteNoise
 from frontend.envelope import EnvelopeGUI
 from pysynth.filters import FreqModulationFilter, Envelope
 from PIL import ImageTk, Image
+from os.path import join
 
 
 class FmButton(tk.Frame):
@@ -56,11 +57,13 @@ class OscillatorGUI(tk.Frame):
         Generate UI.
         """
         self.images = [
-            r'static\oscillators\osA.png',  
-            r'static\oscillators\osB.png',
-            r'static\oscillators\osC.png',
-            r'static\oscillators\osD.png'
+            join('static', 'oscillators', 'osA.png'),
+            join('static', 'oscillators', 'osB.png'),
+            join('static', 'oscillators', 'osC.png'),
+            join('static', 'oscillators', 'osD.png')
             ]
+            
+        
 
         self.waveforms = {
             "sine": SineWave,  
