@@ -2,7 +2,7 @@ import numpy as np
 from abc import ABC
 from pysynth.waveforms import Oscillator, EmptyOscillator
 from typing import List
-from pysynth.params import blocksize, framerate, fade_in_time
+from pysynth.params import *
 from scipy.signal import butter, lfilter, freqz, lfilter_zi
 
 
@@ -16,7 +16,23 @@ class Filter(Oscillator, ABC):
     def __init__(self, sources: List[Oscillator]):
         super().__init__(sources[0].framerate if sources else 0)
         self.sources = sources
-        self.state = 1
+        self._state = 1
+
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, state):
+        """setter for the envelope _state property
+        it prevents from rolling back to an earlier state"""
+        if state != 0:
+            if state >= self._state:
+                self._state = state
+            else:
+                print("Error: trying to set envelope to an earlier state")
+        else:
+            self._state = state
 
 
 class AmpModulationFilter(Filter):
@@ -42,7 +58,7 @@ class AmpModulationFilter(Filter):
 
 class FreqModulationFilter(Filter):
     """
-    Frequncy modulater. Takes a source oscillator and a modulating oscillator as inputs and generates a modulated signal.
+    Frequency modulater. Takes a source oscillator and a modulating oscillator as inputs and generates a modulated signal.
     """
     def __init__(self, source: Oscillator, modulator: Oscillator):
         super().__init__([source])
@@ -102,7 +118,7 @@ class VoicesSumFilter(Filter):
     def __str__(self):
         return f'Sum{tuple(str(s) for s in self.sources)}'
 
-    def add_source(self, source, max):
+    def add_source(self, source):
         self.sources.append(source)
         self.generators.append(source.data())
         self.source_data = zip(*self.generators)
@@ -112,7 +128,7 @@ class VoicesSumFilter(Filter):
         self.sources.remove(source)
         del self.generators[index]
 
-    def prepare_source_data(self):        
+    def prepare_source_data(self):
         self.generators = [src.data() for src in self.sources]
         self.source_data = zip(*self.generators)
 
@@ -174,7 +190,7 @@ class PassFilter(Filter):
         return cls(*args, filter_type="high")
 
 
-class Envelope(Filter):
+class ADSREnvelope(Filter):
     """
     ADSR envelope generator. Takes a source oscillator as input, and yields oscillator data
     multiplied by a variable amplitude envelope. There are four states in the envelope generator:
@@ -206,10 +222,10 @@ class Envelope(Filter):
         self.source = source
         self.amps = [0.0 for _ in range(blocksize)]
         self.max_amp = source.amplitude
-        self.attack = source.envelope['attack']
-        self.decay = source.envelope['decay']
+        self.attack_t = source.envelope['attack']
+        self.decay_t = source.envelope['decay']
         self.sustain_level = source.envelope['sustain'] * self.max_amp
-        self.release = source.envelope['release']
+        self.release_t = source.envelope['release']
         self.a_target = source.envelope['a_target']
         self.dr_target = source.envelope['dr_target']
 
@@ -222,32 +238,39 @@ class Envelope(Filter):
         """
         return (1.0 / (time * self.framerate)) * np.log(target / base)
 
+    def release(self):
+        """
+        This method is called in Output.release_notes(). Whereas the exp(rate) can be calculated in advance
+        for attack and decay, here it will only be calculated on when the envelope state is set to RELEASE,
+        based on the current value of the amplitude (self.amps[-1]).
+        """
+        self.release_multiplier = np.exp(self.get_rate(target=self.dr_target, time=self.release_t, base=(self.amps[-1] + self.dr_target)))
+        self.release_base = - self.dr_target * (1 - self.release_multiplier)
+        self._state = RELEASE
+
     def data(self, modulate=False):
         amplitude = 0.0
         max_amp = self.max_amp
-        attack = self.attack
-        decay = self.decay
+        attack = self.attack_t
+        decay = self.decay_t
         sustain_level = self.sustain_level
-        release = self.release
+        release = self.release_t
         source_data = self.source.data(modulate=modulate)
+        self.release_multiplier = 0.0
 
         # Calculate multipliers here for optimization
-        if self.attack != 0.0:
-            attack_multiplier = np.exp(self.get_rate(target=self.a_target, time=self.attack, base=(max_amp + self.a_target)))
+        if attack != 0.0:
+            attack_multiplier = np.exp(self.get_rate(target=self.a_target, time=attack, base=(max_amp + self.a_target)))
             attack_base = (max_amp + self.a_target) * (1 - attack_multiplier)
-        if self.decay != 0.0:
-            decay_multiplier = np.exp(self.get_rate(target=self.dr_target, time=self.decay, base=(max_amp - sustain_level + self.dr_target)))
+        if decay != 0.0:
+            decay_multiplier = np.exp(self.get_rate(target=self.dr_target, time=decay, base=(max_amp - sustain_level + self.dr_target)))
             decay_base = (sustain_level - self.dr_target) * (1 - decay_multiplier)
-        if self.release != 0.0:
-            release_multiplier = np.exp(self.get_rate(target=self.dr_target, time=self.release, base=(sustain_level + self.dr_target)))
-            release_base = - self.dr_target * (1 - release_multiplier)
 
         while True:
-            # ATTACK STATE
-            if self.state == 1:
+            if self.state == ATTACK:
                 if attack == 0.0:
                     amplitude = max_amp
-                    self.state = 2
+                    self.state = DECAY
                 else:
                     block = []
                     self.amps = []
@@ -257,13 +280,12 @@ class Envelope(Filter):
                         amplitude = attack_base + amplitude * attack_multiplier
                     if modulate: yield block
                     else: yield [a * b for (a, b) in zip(self.amps, block)]
-                    if amplitude >= max_amp: self.state = 2
+                    if amplitude >= max_amp: self.state = DECAY
 
-            # DECAY STATE
-            if self.state == 2:
+            if self.state == DECAY:
                 if decay == 0.0:
                     amplitude = max_amp
-                    self.state = 3
+                    self.state = SUSTAIN
                 else:
                     block = []
                     self.amps = []
@@ -273,10 +295,9 @@ class Envelope(Filter):
                         amplitude = decay_base + amplitude * decay_multiplier
                     if modulate: yield block
                     else: yield [a * b for (a, b) in zip(self.amps, block)]
-                    if amplitude <= sustain_level: self.state = 3
+                    if amplitude <= sustain_level: self.state = SUSTAIN
 
-            # SUSTAIN STATE
-            if self.state == 3:
+            if self.state == SUSTAIN:
                 block = []
                 self.amps = []
                 amplitude = sustain_level
@@ -286,24 +307,22 @@ class Envelope(Filter):
                 if modulate: yield block
                 else: yield [a * b for (a, b) in zip(self.amps, block)]
 
-            # RELEASE STATE
-            if self.state == 4:
-                if release == 0.0 or sustain_level == 0.0:
-                    self.state = 0
+            if self.state == RELEASE:
+                if release == 0.0:
+                    self.state = IDLE
                 elif amplitude > 0:
                     block = []
                     self.amps = []
                     for _ in range(blocksize):
                         block.append(next(source_data))
                         self.amps.append(amplitude)
-                        amplitude = release_base + amplitude * release_multiplier
+                        amplitude = self.release_base + amplitude * self.release_multiplier
                     if modulate: yield block
                     else: yield [a * b for (a, b) in zip(self.amps, block)]
                 else:
-                    self.state = 0
+                    self.state = IDLE
 
-            # IDLE STATE
-            if self.state == 0:
+            if self.state == IDLE:
                 self.amps = [0.0 for _ in range(blocksize)]
                 yield self.amps
 

@@ -5,7 +5,7 @@ from math import log10
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from pysynth.waveforms import SineWave
-from pysynth.filters import Envelope
+from pysynth.filters import ADSREnvelope
 from pysynth.params import blocksize
 
 

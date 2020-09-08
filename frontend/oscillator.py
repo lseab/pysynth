@@ -3,7 +3,7 @@ import string
 from tkinter import ttk
 from pysynth.waveforms import SineWave, SquareWave, WhiteNoise
 from frontend.envelope import EnvelopeGUI
-from pysynth.filters import FreqModulationFilter, Envelope
+from pysynth.filters import FreqModulationFilter, ADSREnvelope
 from PIL import ImageTk, Image
 from os.path import join
 

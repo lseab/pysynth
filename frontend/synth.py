@@ -3,7 +3,7 @@ from PIL import ImageTk, Image
 from tkinter import messagebox, ttk
 import pysynth.params
 from pysynth.output import Output
-from pysynth.filters import Envelope
+from pysynth.filters import ADSREnvelope
 from pysynth.waveforms import SineWave
 from pysynth.midi import MidiController
 from .oscillator import OscillatorGUI

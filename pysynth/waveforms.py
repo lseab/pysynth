@@ -66,7 +66,7 @@ class SineWave(BaseOscillator):
                 t += increment
             else:
                 block = []
-                for _ in range(blocksize):                
+                for _ in range(blocksize):
                     if modulate:
                         block.append(t * frequency)
                     else: block.append(self.amplitude * np.sin(t * frequency))

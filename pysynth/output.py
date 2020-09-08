@@ -1,7 +1,7 @@
 from pysynth.params import blocksize, framerate
 from copy import deepcopy, copy
 from pysynth.audio_api import AudioApi
-from pysynth.filters import AmpModulationFilter, FreqModulationFilter, SumFilter, Envelope, PassFilter, PopFilter, VoicesSumFilter
+from pysynth.filters import AmpModulationFilter, FreqModulationFilter, SumFilter, PassFilter, PopFilter, VoicesSumFilter, ADSREnvelope
 from pysynth.routing import Routing
 from pysynth.waveforms import EmptyOscillator
 
@@ -52,7 +52,7 @@ class Output:
         if len(self.active_voices) >= self.max_voices:
             self.active_voices[-1].release_notes()
             self.active_voices.pop()
-        self.final_output.add_source(PopFilter(voice.filtered_output), max=self.max_voices)
+        self.final_output.add_source(PopFilter(voice.filtered_output))
         self.active_voices.append(voice)
 
     def release_notes(self, frequency):
@@ -156,7 +156,7 @@ class VoiceChannel:
     """
     def __init__(self, output, frequency):
         oscillators = deepcopy(output.oscillators)
-        self.oscillators = [Envelope(o) for o in oscillators]
+        self.oscillators = [ADSREnvelope(o) for o in oscillators]
         self.am_modulator = output.am_modulator
         self.filter_type = output.filter_type
         self.filter_cutoff = output.filter_cutoff
@@ -216,4 +216,4 @@ class VoiceChannel:
         Upon release of the note, set oscillators to decay state.
         """
         for o in self.oscillators:
-            o.state = 4
+            o.release()
