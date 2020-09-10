@@ -1,6 +1,7 @@
 import tkinter as tk
 from PIL import ImageTk, Image
 from tkinter import messagebox, ttk
+from os.path import join
 import pysynth.params
 from pysynth.output import Output
 from pysynth.filters import ADSREnvelope
@@ -25,8 +26,9 @@ class SynthGUI(tk.Tk):
         self.init_protocols()
         self.main_frames()
         self.status_bar()
-        self.oscillator_frame()
         self.selected_algorithm_frame()
+        self.oscillator_frame()
+        self.save_frame()
         self.display_frame()
         self.configuration_frame()
         self.envelope_frame()
@@ -65,6 +67,8 @@ class SynthGUI(tk.Tk):
         self.keyframe.pack()
         self.inputFrame = tk.Frame(self.main_frame)
         self.inputFrame.pack()
+        self.saveFrame = tk.Frame(self.main_frame)
+        self.saveFrame.pack()
 
     def status_bar(self):
         """
@@ -72,6 +76,15 @@ class SynthGUI(tk.Tk):
         """
         self.statusbar = ttk.Label(self, text='Welcome to PySynth', relief=tk.SUNKEN, font='Times 10 italic')
         self.statusbar.pack(side=tk.BOTTOM, fill=tk.X)
+
+    def selected_algorithm_frame(self):
+        """
+        FM algorithm selection icon.
+        """
+        self.selected_algo_frame = tk.Frame(self.oscframe, width=100, height=100)
+        self.selected_algo_frame.pack(side=tk.LEFT, anchor=tk.N, padx=5, pady=50)
+        self.selected_algo_frame.pack_propagate(False)
+        self.selected_algo_frame.bind("<Button-1>", self.show_config)
 
     def oscillator_frame(self):
         """
@@ -83,16 +96,21 @@ class SynthGUI(tk.Tk):
             osc_nr = len(self.oscillators)
             osc_gui = OscillatorGUI(master_frame=self.oscframe, gui=self, output=self.output, number=osc_nr)
             osc_gui.pack(side=tk.LEFT, anchor=tk.N, padx=30, pady=5)
-            self.oscillators.append(osc_gui)    
-
-    def selected_algorithm_frame(self):
+            self.oscillators.append(osc_gui)
+    
+    def save_frame(self):
         """
-        FM algorithm selection icon.
+        Midi input gui.
         """
-        self.selected_algo_frame = tk.Frame(self.oscframe, width=100, height=100)
-        self.selected_algo_frame.pack(side=tk.LEFT, anchor=tk.N, padx=30, pady=50)
-        self.selected_algo_frame.pack_propagate(False)
-        self.selected_algo_frame.bind("<Button-1>", self.show_config)
+        ## Record Button
+        self.record_image = ImageTk.PhotoImage(Image.open(join('images', 'buttons', 'record.png')).resize((30,30)))
+        self.record = tk.Button(self.oscframe, command=self._record, image=self.record_image, border=0, highlightbackground="#d9d9d9")
+        self.record.config(activebackground=self.record.cget('background'))
+        self.record.pack(pady=10, padx=50)
+        ## Save Button
+        self.save_image = ImageTk.PhotoImage(Image.open(join('images', 'buttons', 'recording.png')).resize((30,30)))
+        self.save = tk.Button(self.oscframe, command=self._save, image=self.save_image, border=0, highlightbackground="#d9d9d9")
+        self.save.config(activebackground=self.save.cget('background'))
 
     def display_frame(self):
         """
@@ -145,6 +163,7 @@ class SynthGUI(tk.Tk):
         self.pass_filter_gui.pack(padx=10, pady=10)
         self.pass_filter_gui.bind("<Button-1>", self.show_pass_filter)
         self.pass_filter_gui.cutoff.slide.bind("<Button-1>", self.show_pass_filter)
+        self.pass_filter_gui.plot_frame.pack_forget()
 
     def keyboard_frame(self):
         """
@@ -166,6 +185,16 @@ class SynthGUI(tk.Tk):
         # callback only triggered on config change
         self.input.bind("<Configure>", self.select_input_device)
         self.input.grid(row=0, column=1, pady=10)
+
+    def _save(self):
+        self.output.save_to_wav()
+        self.save.pack_forget()
+        self.record.pack(pady=10, padx=50)
+
+    def _record(self):
+        self.output.record_to_wav()
+        self.record.pack_forget()
+        self.save.pack(pady=10, padx=50)
 
     def change_algorithm_image(self):
         """

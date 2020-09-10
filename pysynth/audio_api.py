@@ -1,21 +1,27 @@
 import sounddevice as sd
 import numpy as np
+from scipy.io.wavfile import write
+from pysynth.sample import AudioSample
+import pysynth.params as p
+from pysynth.waveforms import SineWave
 
 
 class AudioApi:
     """
     Api to interface with PortAudio using the sounddevice library.
     """
-    def __init__(self, framerate: int, blocksize: int, channels: int):
+    def __init__(self, framerate: int = p.framerate, blocksize: int = p.blocksize, channels: int = 1):
         self.framerate = framerate
         self.channels = channels        
         self.channel_mapping = np.arange(self.channels)
         self.blocksize = blocksize
+        self.data = None
         self.stream = self.initialize_stream()
         self.stream.start()
-        self.data = None
         self.volume = 100.0
         self.playing = False
+        self.sample = AudioSample("pysynth.wav")
+        self.recording = False
 
     def initialize_stream(self):
         """
@@ -48,6 +54,8 @@ class AudioApi:
         else:
             try: 
                 data = next(self.data)
+                if self.recording:
+                    self.sample.join(AudioSample.from_array(data))
                 data = self.prepare_data_blocks(data)
                 outdata[:self.blocksize, self.channel_mapping] =  (self.volume / 100.0) * data
             except StopIteration:
@@ -66,3 +74,8 @@ class AudioApi:
         Stop audio playback.
         """
         self.playing = False
+
+    def save_to_wav(self):
+        self.sample.save_to_wav()
+        self.sample = AudioSample("pysynth.wav")
+        self.recording = False

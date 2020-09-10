@@ -113,7 +113,6 @@ class PassFilterGUI(tk.LabelFrame):
         self.canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(side='top', fill='both', expand=1)
-        self.pack()
 
     def draw(self):
         cutoff = self.output.filter_cutoff

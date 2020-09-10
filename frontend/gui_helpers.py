@@ -68,7 +68,7 @@ class ScrollFrame(tk.Frame):
         self.scrollwindow.bind('<Leave>', self._unbound_to_mousewheel)
 
     def _bound_to_mousewheel(self, event):
-        self.canv.bind_all("<MouseWheel>", self._on_mousewheel)   
+        self.canv.bind_all("<MouseWheel>", self._on_mousewheel)
 
     def _unbound_to_mousewheel(self, event):
         self.canv.unbind_all("<MouseWheel>") 

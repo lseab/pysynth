@@ -13,7 +13,7 @@ class Output:
     Sends data to PortAudio through the AudioApi object.
     """
     def __init__(self):
-        self.audio_api = AudioApi(framerate=framerate, blocksize=blocksize, channels=1)
+        self.audio_api = AudioApi()
         self.am_modulator = None
         self.filter_type = "lowpass"
         self.filter_cutoff = 18000
@@ -95,6 +95,12 @@ class Output:
         Stop audio playback
         """
         self.audio_api.stop()
+
+    def record_to_wav(self):
+        self.audio_api.recording = True
+
+    def save_to_wav(self):
+        self.audio_api.save_to_wav()
 
 
 class Algorithms:

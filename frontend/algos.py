@@ -16,11 +16,11 @@ class AlgorithmGUI(tk.Frame):
 
     def algo_buttons(self):
         self.images = [
-            join('static', 'algorithms', 'stack.png'),
-            join('static', 'algorithms', 'parallel.png'),
-            join('static', 'algorithms', 'square.png'),
-            join('static', 'algorithms', '3to1.png'),
-            join('static', 'algorithms', 'custom.png')
+            join('images', 'algorithms', 'stack.png'),
+            join('images', 'algorithms', 'parallel.png'),
+            join('images', 'algorithms', 'square.png'),
+            join('images', 'algorithms', '3to1.png'),
+            join('images', 'algorithms', 'custom.png')
         ]
 
         self.top_frame = tk.Frame(self)

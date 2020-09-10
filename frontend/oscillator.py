@@ -57,10 +57,10 @@ class OscillatorGUI(tk.Frame):
         Generate UI.
         """
         self.images = [
-            join('static', 'oscillators', 'osA.png'),
-            join('static', 'oscillators', 'osB.png'),
-            join('static', 'oscillators', 'osC.png'),
-            join('static', 'oscillators', 'osD.png')
+            join('images', 'oscillators', 'osA.png'),
+            join('images', 'oscillators', 'osB.png'),
+            join('images', 'oscillators', 'osC.png'),
+            join('images', 'oscillators', 'osD.png')
         ]
             
         self.waveforms = {
@@ -160,7 +160,7 @@ class OscillatorGUI(tk.Frame):
 
     def show_envelope(self, *args):
         try:
-            for o in self.gui.oscillators: o['bg'] = 'SystemButtonFace'
+            for o in self.gui.oscillators: o['bg'] = self.gui['bg']
             self['bg'] = 'SkyBlue1'
             self.gui.show_envelope(self.osc, self.number)
         except:
