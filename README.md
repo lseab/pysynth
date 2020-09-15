@@ -26,4 +26,4 @@ Run main.py in your terminal
 (venv) $ python main.py
 ```
 
-![Synth screenshot](./static/screenshots/screenshot1.png?raw=true "Screenshot of the synth GUI")
+![Synth screenshot](./images/screenshots/screenshot1.png?raw=true "Screenshot of the synth GUI")
