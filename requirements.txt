@@ -2,7 +2,7 @@ cffi==1.14.0
 cycler==0.10.0
 kiwisolver==1.2.0
 matplotlib==3.2.2
-numpy==1.19.0
+numpy==1.22.0
 Pillow==7.1.2
 pycparser==2.20
 pygame==1.9.6
